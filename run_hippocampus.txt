@@ -1,0 +1,19 @@
+
+#create conda env
+conda create --name replay --file requirements.txt
+conda activate replay
+
+mkdir ./results
+mkdir ./results/decoding
+mkdir ./results/summary_data
+mkdir ./data
+mv for_Kris ./data/
+mkdir ./data/pickled_data
+mkdir ./data/replay_data
+mkdir ./figs
+
+python widloski_load.py
+python train_decoder.py
+python plot_summary_data.py
+python policy_by_replay.py
+
