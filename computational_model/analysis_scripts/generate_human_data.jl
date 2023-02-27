@@ -19,60 +19,51 @@ all_wall_loc, all_ps, all_as = [], [], []
 ages, sexes = [], []
 Nepisodes = []
 
-fnames = ["2022_10_14_data_2052"]
 
-for fname = fnames
-    ## load human data ###
+db = SQLite.DB("../human_data/prolific_data.sqlite")
 
-    db = SQLite.DB("../human_data/"*fname*".sqlite")
-
-    users = (DBInterface.execute(db, "SELECT id FROM users") |> DataFrame)[:, "id"]
-    sizes = zeros(length(users))
-    total_times = zeros(length(users))
-    tokens = []
-    for (i, id) = enumerate(users)
-        user_eps = DBInterface.execute(db, "SELECT * FROM episodes WHERE user_id = "*string(id[1])) |> DataFrame
-        println(id, " ", size(user_eps))
-        sizes[i] = size(user_eps, 1)
-        if sizes[i] > 0.5
-            total_times[i] = (user_eps[end, "start_time"] - user_eps[1, "start_time"])/1000 #in seconds
-        end
-
-        info = DBInterface.execute(db, "SELECT * FROM users WHERE id = "*string(id)) |> DataFrame
-        append!(sexes, [info[1, "sex"]])
-        append!(ages, info[1, "age"])
-        push!(tokens, info[1, "token"])
+users = (DBInterface.execute(db, "SELECT id FROM users") |> DataFrame)[:, "id"]
+sizes = zeros(length(users))
+total_times = zeros(length(users))
+tokens = []
+for (i, id) = enumerate(users)
+    user_eps = DBInterface.execute(db, "SELECT * FROM episodes WHERE user_id = "*string(id[1])) |> DataFrame
+    println(id, " ", size(user_eps))
+    sizes[i] = size(user_eps, 1)
+    if sizes[i] > 0.5
+        total_times[i] = (user_eps[end, "start_time"] - user_eps[1, "start_time"])/1000 #in seconds
     end
 
-    println(sizes)
-    tokenLs = [length(token) for token = tokens]
-
-    conditions = (
-        (sizes .>= 58) #6+40+12
-        .& (tokenLs .== 24) #length of prolific token
-    )
-
-    valid_users = users[ conditions ]
-    #valid_users = shuffle(valid_users) #permute to preserve anonymity
-
-    if game_type == "play" max_RT = 5000 else max_RT = 2000 end
-    if game_type == "play" max_RT = 50000 else max_RT = 20000 end
-    if game_type == "play" nskip = 2 else nskip = 8 end
-    bins = 1:100:2000
-    
-    for (i, user_id) = enumerate(valid_users)
-        rews, as, states, wall_loc, ps, times, trial_nums, trial_time, RTs, shot = extract_maze_data(db, user_id, Larena, max_RT = max_RT, game_type = game_type, skip_init = nskip)
-        append!(all_RTs, [RTs])
-        append!(all_rews, [rews])
-        append!(all_trial_nums, [trial_nums])
-        append!(all_trial_time, [trial_time])
-        append!(all_states, [states])
-        append!(all_shot, [shot])
-        append!(all_wall_loc, [wall_loc])
-        append!(all_ps, [ps])
-        append!(all_as, [as])
-        append!(Nepisodes, size(ps, 2))
+    info = DBInterface.execute(db, "SELECT * FROM users WHERE id = "*string(id)) |> DataFrame
+    append!(sexes, [info[1, "sex"]])
+    append!(ages, info[1, "age"])
+    push!(tokens, info[1, "token"])
 end
+
+println(sizes)
+tokenLs = [length(token) for token = tokens]
+
+conditions = (
+    (sizes .>= 58) #6+40+12
+    .& (tokenLs .== 24) #length of prolific token
+)
+
+valid_users = users[ conditions ]
+if game_type == "play" nskip = 2 else nskip = 8 end
+bins = 1:100:2000
+
+for (i, user_id) = enumerate(valid_users)
+    rews, as, states, wall_loc, ps, times, trial_nums, trial_time, RTs, shot = extract_maze_data(db, user_id, Larena, max_RT = Inf, game_type = game_type, skip_init = nskip)
+    append!(all_RTs, [RTs])
+    append!(all_rews, [rews])
+    append!(all_trial_nums, [trial_nums])
+    append!(all_trial_time, [trial_time])
+    append!(all_states, [states])
+    append!(all_shot, [shot])
+    append!(all_wall_loc, [wall_loc])
+    append!(all_ps, [ps])
+    append!(all_as, [as])
+    append!(Nepisodes, size(ps, 2))
 end
 valid_users = 1:length(all_rews)
 ##

@@ -35,8 +35,6 @@ model_properties, wall_environment, model_eval = build_environment(
 )
 m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 
-Naction = wall_environment.properties.dimensions.Naction
-
 Random.seed!(1)
 batch_size = 5000
 tic = time()

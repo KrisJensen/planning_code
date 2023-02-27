@@ -79,8 +79,8 @@ for i = keep
         m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 
         environment = wall_environment
-        ed = environment.properties.dimensions; Nout = m.model_properties.Nout
-        Nhidden = m.model_properties.Nhidden; Nstates = ed.Nstates; Naction = ed.Naction; T = ed.T
+        ed = environment.dimensions; Nout = m.model_properties.Nout
+        Nhidden = m.model_properties.Nhidden; Nstates = ed.Nstates; T = ed.T
 
         ## run through same states
 
@@ -151,7 +151,7 @@ for i = keep
                 active = [(world_state.environment_state.time[b] < (T+1 - 1e-2)) & (as[b, ts[b]] .> 0.5) for b = 1:batch_size] #active heads
                 rew_prev = (rew[:] .> 0.5)
                 rew, agent_input, world_state, predictions = environment.step(
-                        agent_output, a, world_state, environment.properties, m.model_properties,
+                        agent_output, a, world_state, environment.dimensions, m.model_properties,
                         m, h_rnn
                     )
 
@@ -169,7 +169,7 @@ for i = keep
 
                 ### generate input
                 ahot = zeros(Float32, 5, batch_size); for b = 1:batch_size ahot[Int(a[b]), b] = 1f0 end
-                agent_input = Float32.(gen_input(world_state, ahot, rew, environment.properties, m.model_properties))
+                agent_input = Float32.(gen_input(world_state, ahot, rew, environment.dimensions, m.model_properties))
 
                 rew, agent_input, a = zeropad_data(rew, agent_input, a, active)
                 push!(new_ys, agent_output)

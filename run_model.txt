@@ -23,6 +23,8 @@ mkdir ./figs/human_behavior
 mkdir ./figs/maze/human_behavior
 mkdir ./validate_data/data
 mkdir ./plot_paper_figs/figs
+mkdir ./models
+mkdir ./results
 
 ## human analyses
 ./analysis_scripts/generate_human_data.jl

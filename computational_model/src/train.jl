@@ -1,4 +1,3 @@
-#module TrainUtils
 using Flux, Zygote
 
 function gmap(f, prms, gss::Zygote.ADictOrGrads...)
@@ -16,5 +15,3 @@ function _getformap(gs, p)
     g = gs[p]
     return isnothing(g) ? fill!(similar(p), 0) : g
 end
-
-gmap_grads_pred(g1, g2) = gmap(+, pred_prms, g1, g2)

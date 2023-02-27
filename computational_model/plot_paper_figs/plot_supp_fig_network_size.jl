@@ -7,7 +7,7 @@ fig = figure(figsize = (10*cm, 3*cm))
 grids = fig.add_gridspec(nrows=1, ncols=2, left=0.00, right=1.00, bottom = 0.0, top = 1.0, wspace=0.35)
 
 @load "$datadir/rew_and_plan_by_n_model.bson" res_dict
-meanrews, pfracs, seeds, Nhiddens, epochs, biases = [res_dict[k] for k = ["meanrews", "planfracs", "seeds", "Nhiddens", "epochs", "biases"]]
+meanrews, pfracs, seeds, Nhiddens, epochs = [res_dict[k] for k = ["meanrews", "planfracs", "seeds", "Nhiddens", "epochs"]]
 epochs = epochs[epochs .<= plan_epoch]
 hinds = [2;3;4]
 

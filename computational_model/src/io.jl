@@ -17,7 +17,7 @@ function save_model(m, store, opt, filename, environment, loss_hp; Lplan)
     network = m.network
     hps = Dict(
         "Nhidden" => model_properties.Nhidden,
-        "T" => environment.properties.dimensions.T,
+        "T" => environment.dimensions.T,
         "Larena" => environment.dimensions.Larena,
         "Nin" => model_properties.Nin,
         "Nout" => model_properties.Nout,

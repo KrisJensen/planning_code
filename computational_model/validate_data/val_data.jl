@@ -35,7 +35,7 @@ model_properties, wall_environment, model_eval = build_environment(
 )
 m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 
-Nstates, Naction = wall_environment.properties.dimensions.Nstates, wall_environment.properties.dimensions.Naction
+Nstates, Naction = wall_environment.dimensions.Nstates, wall_environment.dimensions.Naction
 
 
 ## compare imagined trajectories to this Neuron paper!
@@ -44,7 +44,7 @@ Nstates, Naction = wall_environment.properties.dimensions.Nstates, wall_environm
 
 Random.seed!(2)
 batch = 25000
-ed = wall_environment.properties.dimensions
+ed = wall_environment.dimensions
 Nout, Nhidden = m.model_properties.Nout, m.model_properties.Nhidden
 Nstates, Naction, T = ed.Nstates,  ed.Naction, ed.T
 world_state, agent_input = wall_environment.initialize(
@@ -84,11 +84,11 @@ for t = 1:tmax
 
     ###run crossvalidated planning and return states!!!
     ahot = zeros(Float32, 5, batch); for b = 1:batch ahot[Int(a[b]), b] = 1f0 end
-    _, _, (path_cv, _, _, plan_states_cv) = planner.planning_algorithm(world_state,ahot,wall_environment.properties,agent_output,at_rew,planner,m,h_rnn,m.model_properties,returnall = true)
+    _, _, (path_cv, _, _, plan_states_cv) = planner.planning_algorithm(world_state,ahot,wall_environment.dimensions,agent_output,at_rew,planner,m,h_rnn,m.model_properties,returnall = true)
 
     exploit[rew[:] .> 0.5] .= true #exploitation phase
     rew, agent_input, world_state, predictions = wall_environment.step(
-                agent_output, a, world_state, wall_environment.properties, m.model_properties, m, h_rnn
+                agent_output, a, world_state, wall_environment.dimensions, m.model_properties, m, h_rnn
             )
     path = reshape(world_state.planning_state.plan_input[1:(4*Lplan), :], 4, Lplan, batch)
     plan_states = world_state.planning_state.plan_cache

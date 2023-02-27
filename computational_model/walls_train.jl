@@ -1,4 +1,5 @@
 using Pkg; Pkg.activate(".")
+using Revise
 using ToPlanOrNotToPlan
 using Flux, Statistics, Random, Distributions
 using StatsFuns, Zygote, ArgParse, NaNStatistics
@@ -6,6 +7,7 @@ using Logging
 
 function parse_commandline()
     s = ArgParseSettings()
+    ### set default values of command line options ###
     @add_arg_table s begin
         "--Nhidden"
         help = "Number of hidden units"
@@ -16,15 +18,15 @@ function parse_commandline()
         arg_type = Int
         default = 4
         "--T"
-        help = "Number of timesteps per episode"
+        help = "Number of timesteps per episode (in units of physical actions)"
         arg_type = Int
         default = 50
         "--Lplan"
-        help = "planning horizon"
+        help = "Maximum planning horizon"
         arg_type = Int
         default = 8
         "--load"
-        help = "load previous model with same parameters"
+        help = "Load previous model instead of initializing new model"
         arg_type = Bool
         default = false
         "--load_epoch"
@@ -32,47 +34,35 @@ function parse_commandline()
         arg_type = Int
         default = 0
         "--seed"
-        help = "random seed to use"
+        help = "Which random seed to use"
         arg_type = Int
         default = 1
-        "--task"
-        help = "which task to learn"
-        arg_type = String
-        default = "maze"
-        "--nonlinearity"
-        help = "which nonlinearity to use in the RNN (GRU/relu)"
-        arg_type = String
-        default = "GRU"
         "--save_dir"
-        help = "save directory"
+        help = "Save directory"
         arg_type = String
         default = "./"
         "--beta_p"
-        help = "predictive coding scale"
+        help = "Relative importance of predictive loss"
         arg_type = Float32
         default = 0.5f0
-        "--no_planning"
-        help = "prevent any planning"
-        arg_type = Int
-        default = 0
         "--prefix"
-        help = "add prefix to model name"
+        help = "Add prefix to model name"
         arg_type = String
         default = ""
         "--load_fname"
-        help = "model to load (default to model name)"
+        help = "Model to load (default to default model name)"
         arg_type = String
         default = ""
         "--n_epochs"
-        help = "total number of training epochs"
+        help = "Total number of training epochs"
         arg_type = Int
         default = 1001
         "--batch_size"
-        help = "batch size for each gradient step"
+        help = "Batch size for each gradient step"
         arg_type = Int
         default = 40
         "--lrate"
-        help = "learning rate"
+        help = "Learning rate"
         arg_type = Float64
         default = 1e-3
     end
@@ -82,12 +72,10 @@ end
 function main()
 
     ##### global parameters #####
-
     args = parse_commandline()
     println(args)
 
-    #load various helpter functions (these use Larena)
-    task = args["task"]
+    #extract command line arguments
     Larena = args["Larena"]
     Lplan = args["Lplan"]
     Nhidden = args["Nhidden"]
@@ -101,77 +89,56 @@ function main()
     βp = Float32(args["beta_p"])
     batch_size = Int(args["batch_size"])
     lrate = Float64(args["lrate"])
-    βe_0 = 0.05f0
-    no_planning = Bool(args["no_planning"])
-
-    println("prior: ", prior_type, " ", epsilon)
-    if no_planning println("We're preventing planning!!!") end
 
     Base.Filesystem.mkpath(save_dir)
-
-    Random.seed!(seed)
+    Random.seed!(seed) #set random seed
 
     loss_hp = LossHyperparameters(;
-        #predictive coding factor
+        #predictive loss weight
         βp=βp,
-        #value function approximation factor
+        #value function loss weight
         βv=0.05f0,
-        #entropy cost
-        βe=βe_0,
-        #action cost
-        βa=0.0f0,
-        #reward factor
+        #entropy loss cost
+        βe=0.05f0,
+        #reward loss cost
         βr=1.0f0,
-        # discount factor
-        γ=1.0f0,
-        #train on predict loss?
-        predict=true,
-        #available actions
-        Naction = 5,
-        #arena size
-        Larena = Larena,
     )
 
-    arena = build_arena(Larena)
+    #build RL environment
     model_properties, wall_environment, model_eval = build_environment(
-        arena, Nhidden, T; Lplan, task=task, no_planning = no_planning
+        Larena, Nhidden, T; Lplan
     )
-
-    Nstates = wall_environment.properties.dimensions.Nstates
-    m = build_model(model_properties, 5, nonlinearity=args["nonlinearity"], Nstates = Nstates)
-    
+    # build RL agent
+    m = build_model(model_properties, 5)
+    # construct summary string
     mod_name = create_model_name(
-        Larena, Nhidden, T, seed, Lplan, βp = βp, no_planning = no_planning, prefix = prefix
+        Nhidden, T, seed, Lplan, prefix = prefix
     )
 
     #training parameters
-    n_batches, save_every = 200, 100
-    opt = ADAM(lrate)
+    n_batches, save_every = 200, 50
+    opt = ADAM(lrate) #initialize optimiser
 
     #used to keep track of progress
     rews, preds = [], []
     epoch = 0 #start at epoch 0
-
-    if Lplan > 0 #do we plan?
-        println("planning! ", model_properties.Nin, " ", model_properties.Nout)
-    end
-
     @info "model name" mod_name
     @info "training info" n_epochs n_batches batch_size
 
     if load #if we load a previous model
-        if load_fname == ""
-            fname = "$save_dir/models/$task/" * mod_name * "_" * string(args["load_epoch"])
-        else
-            fname = "$save_dir/models/$task/" * load_fname
+        if load_fname == "" #filename not specified; fall back to default
+            fname = "$save_dir/models/" * mod_name * "_" * string(args["load_epoch"])
+        else #load specific model
+            fname = "$save_dir/models/" * load_fname
         end
-        network, opt, store, hps, policy, prediction = recover_model(fname, modular = true)
+        #load the parameters and initialize model
+        network, opt, store, hps, policy, prediction = recover_model(fname)
         m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 
+        #load the learning curve from the previous model
         rews, preds = store[1], store[2]
-        println("previous steps: ", length(rews))
         epoch = length(rews) #start where we were
-        if load_fname != "" #loaded from pretraining; reset opt
+        if load_fname != "" #loaded pretrained model; reset optimiser
             opt = ADAM(lrate)
         end
     end
@@ -180,23 +147,16 @@ function main()
     println("parameter length: ", length(prms))
     for p = prms println(size(p)) end
 
-
-    Nthread = Threads.nthreads()
-    multithread = Nthread > 1
-    thread_batch_size = Int(ceil(batch_size / Nthread)) #distribute across threads
-    function get_closure(multithread, ponder)
-        if multithread
-            @info "multithreading" Nthread
-            return () ->
-                model_loss(m, wall_environment, loss_hp, thread_batch_size, ponder = ponder) / Nthread
-        else
-            return () -> model_loss(m, wall_environment, loss_hp, batch_size, ponder = ponder) #function to optimize
-        end
-    end
-
-    closure = get_closure(multithread, ponder)
+    Nthread = Threads.nthreads() #number of threads available
+    multithread = Nthread > 1 #multithread if we can
+    @info "multithreading" Nthread
+    thread_batch_size = Int(ceil(batch_size / Nthread)) #distribute batch evenly across threads
+    #construct function without arguments for Flux
+    closure = () -> model_loss(m, wall_environment, loss_hp, thread_batch_size) / Nthread
 
     gmap_grads(g1, g2) = gmap(+, prms, g1, g2) #define map function for reducing gradients
+
+    #function for training on a single match
     function loop!(batch, closure)
         if multithread #distribute across threads?
             all_gs = Vector{Zygote.Grads}(undef, Nthread) #vector of gradients for each thread
@@ -212,38 +172,39 @@ function main()
         return Flux.Optimise.update!(opt, prms, gs) #update model parameters
     end
 
-    t0 = time()
+    t0 = time() #wallclock time
     while epoch < n_epochs
-        epoch += 1
-        flush(stdout) #flush output in case we're on cluster
+        epoch += 1 #count epochs
+        flush(stdout) #flush output
 
-        Rmean, pred, mean_a, first_rew, bias = model_eval(
-            m, batch_size, loss_hp, ponder = ponder
+        Rmean, pred, mean_a, first_rew = model_eval(
+            m, batch_size, loss_hp
         ) #evaluate performance
         Flux.reset!(m) #reset model
 
-        if (epoch - 1) % save_every == 0 #occasionally save our model in case we want to restart
-            Base.Filesystem.mkpath("$save_dir/models/$task")
-            filename = "$save_dir/models/$task/" * mod_name * "_" * string(epoch - 1)
+        if (epoch - 1) % save_every == 0 #occasionally save our model
+            Base.Filesystem.mkpath("$save_dir/models")
+            filename = "$save_dir/models/" * mod_name * "_" * string(epoch - 1)
             store = [rews, preds]
-            save_model(m, store, opt, filename, wall_environment, loss_hp; ponder, Lplan)
+            save_model(m, store, opt, filename, wall_environment, loss_hp; Lplan)
         end
 
+        #print progress
         elapsed_time = round(time() - t0; digits=1)
-        @info "progress" epoch elapsed_time Rmean pred mean_a first_rew bias
-        println("progress: epoch=$epoch t=$elapsed_time R=$Rmean pred=$pred plan=$mean_a first=$first_rew bias=$bias")
+        println("progress: epoch=$epoch t=$elapsed_time R=$Rmean pred=$pred plan=$mean_a first=$first_rew")
         push!(rews, Rmean)
         push!(preds, pred)
-        plot_progress(rews, preds)
+        plot_progress(rews, preds) #plot prorgess
 
         for batch in 1:n_batches #for each batch
-            loop!(batch, closure)
+            loop!(batch, closure) #perform an update step
         end
     end
 
     Flux.reset!(m) #reset model state
-    filename = "$save_dir/results/$task" * "_" * mod_name
+    #save model
+    filename = "$save_dir/results/" * mod_name
     store = [rews, preds]
-    return save_model(m, store, opt, filename, wall_environment, loss_hp; ponder, Lplan)
+    return save_model(m, store, opt, filename, wall_environment, loss_hp; Lplan)
 end
 main()

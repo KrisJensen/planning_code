@@ -91,7 +91,7 @@ function nograd_input(x)
     end
 end
 
-function forward_modular(mod, ed::EnvironmentDimensions, x)
+function forward_modular(mod, ed::EnvironmentDimensions, x, h_rnn)
     #this just adds a softmax to the policy output
     #m is a model
     #x is Nin x batch
@@ -148,7 +148,7 @@ function run_episode(
     calc_loss = true,
     initial_params = []
 )
-    ed = environment.properties.dimensions
+    ed = environment.dimensions
     Nout = mod.model_properties.Nout
     Nhidden = mod.model_properties.Nhidden
     Nstates = ed.Nstates
@@ -184,7 +184,7 @@ function run_episode(
         end
 
         #agent_input is Nin x batch
-        h_rnn, agent_output, a = mod.forward(mod, ed, agent_input; h_rnn=h_rnn) #RNN step agent_output_t = (pi_t(s_t), V_t(s_t)) (nout x batch)
+        h_rnn, agent_output, a = mod.forward(mod, ed, agent_input, h_rnn) #RNN step agent_output_t = (pi_t(s_t), V_t(s_t)) (nout x batch)
         active = (world_state.environment_state.time .< (T+1 - 1e-2)) #active heads
         agent_input_old = agent_input
 
@@ -192,7 +192,7 @@ function run_episode(
         if calc_loss Lprior += prior_loss(agent_output, world_state.agent_state, active, mod) end
 
         rew, agent_input, world_state, predictions = environment.step(
-            agent_output, a, world_state, environment.properties, mod.model_properties,
+            agent_output, a, world_state, environment.dimensions, mod.model_properties,
             mod, h_rnn
         )
 

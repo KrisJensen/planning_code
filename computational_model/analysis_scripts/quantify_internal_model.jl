@@ -26,16 +26,12 @@ for seed = seeds
         )
         m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 
-        Nstates = Larena^2
-        Naction = environment.properties.dimensions.Naction
-
         ##
         Random.seed!(1)
-
-        ed = environment.properties.dimensions
+        ed = environment.dimensions
         Nout = m.model_properties.Nout
         Nhidden = m.model_properties.Nhidden
-        T = ed.T
+        T, Naction, Nstates = ed.T, ed.Naction. ed.Nstates
 
         ### initialize reward probabilities and state ###
         world_state, agent_input = environment.initialize(zeros(2), zeros(2), batch, m.model_properties, initial_params = [])
@@ -53,7 +49,7 @@ for seed = seeds
 
             old_rew[:] = rew[:] #did I get reward on previous timestep
             rew, agent_input, world_state, predictions = environment.step(
-                agent_output, a, world_state, environment.properties, m.model_properties,
+                agent_output, a, world_state, environment.dimensions, m.model_properties,
                 m, h_rnn
             )
 

@@ -31,7 +31,7 @@ end
 
 ### plot opt vs RT play ###
 
-arena = build_arena(4); ed = EnvironmentDimensions(4^2, 2, 5, 50)
+Larena = 4; ed = EnvironmentDimensions(4^2, 2, 5, 50, Larena)
 @load "$(datadir)/human_all_data_follow.bson" data;
 all_states, all_ps, all_as, all_wall_loc, all_rews, all_RTs, all_trial_nums, all_trial_time = data
 all_opts = []
@@ -42,7 +42,7 @@ for i = keep
         dists = dist_to_rew(all_ps[i][:, b:b], all_wall_loc[i][:, :, b:b], arena)
         if sum(all_rews[i][b, :]) > 0.5
             for t = findall(all_rews[i][b,:] .> 0.5)[1]+1:sum(all_as[i][b,:] .> 0.5)
-                pi_opt = optimal_policy(Int.(all_states[i][:,b,t]), all_wall_loc[i][:,:,b], dists, arena, ed)
+                pi_opt = optimal_policy(Int.(all_states[i][:,b,t]), all_wall_loc[i][:,:,b], dists, ed)
                 push!(opts, Float64(pi_opt[Int(all_as[i][b,t])] > 1e-2))
             end
         end

@@ -22,14 +22,14 @@ function update_agent_state(agent_state, amove, Larena)
 end
 
 function act_and_receive_reward(
-    a, world_state, planner, environment_properties, agent_output, model, h_rnn, mp
+    a, world_state, planner, environment_dimensions, agent_output, model, h_rnn, mp
 )
     agent_state = world_state.agent_state
     environment_state = world_state.environment_state
     reward_location = environment_state.reward_location
     wall_loc = environment_state.wall_loc
-    Naction = environment_properties.dimensions.Naction
-    Larena = environment_properties.dimensions.Larena
+    Naction = environment_dimensions.Naction
+    Larena = environment_dimensions.Larena
 
     agent_state_ind = state_ind_from_state(Larena, agent_state) #Batch
     batch = size(a, 2)
@@ -77,7 +77,7 @@ function act_and_receive_reward(
 
     planning_state, plan_inds = planner.planning_algorithm(world_state,
                                                             ahot,
-                                                            environment_properties,
+                                                            environment_dimensions,
                                                             agent_output,
                                                             at_rew,
                                                             planner,#)
@@ -116,31 +116,24 @@ function build_environment(
     environment_dimensions = EnvironmentDimensions(Nstates, Nstate_rep, Naction, T, Larena)
 
     ### specify environment function per task ###
-    function step(agent_output, a, world_state, environment_properties, model_properties, model, h_rnn)
-        ### input the agent output; output action, reward, and new input
-        ### agent_state is a 2-vector
-        ### agent_output is Nout x batch
-        ### t is scalar
-        ### agent_state is 2xbatch
-        ### reward_location is is Nstates x batch
-        ### obstacle_loc is Nstates x batch
+    function step(agent_output, a, world_state, environment_dimensions, model_properties, model, h_rnn)
 
         Zygote.ignore() do
             rew, new_world_state, predictions, ahot, at_rew = act_and_receive_reward(
-                a, world_state, planner, environment_properties, agent_output, model, h_rnn, model_properties
+                a, world_state, planner, environment_dimensions, agent_output, model, h_rnn, model_properties
             )
 
-            agent_input = gen_input(new_world_state, ahot, rew, environment_properties, model_properties)
+            agent_input = gen_input(new_world_state, ahot, rew, environment_dimensions, model_properties)
 
             return rew, Float32.(agent_input), new_world_state, predictions
         end
     end
 
     function initialize(reward_location, agent_state, batch, mp; initial_params = [])
-        return initialize_arena(reward_location, agent_state, batch, mp, environment_properties, initial_plan_state, initial_params=initial_params)
+        return initialize_arena(reward_location, agent_state, batch, mp, environment_dimensions, initial_plan_state, initial_params=initial_params)
     end
 
-    environment = Environment(initialize, step, environment_properties)
+    environment = Environment(initialize, step, environment_dimensions)
 
     ### task specific evaluation/progress function ####
     function model_eval(m, batch::Int64, loss_hp::LossHyperparameters)
@@ -150,8 +143,8 @@ function build_environment(
         all_actions = zeros(Nrep, batch)
         firstrews = zeros(Nrep, batch)
         preds = zeros(T - 1, Nrep, batch)
-        Naction = environment.properties.dimensions.Naction
-        Nstates = environment.properties.dimensions.Nstates
+        Naction = environment_dimensions.Naction
+        Nstates = environment_dimensions.Nstates
 
         for i in 1:Nrep
             _, agent_outputs, rews, actions, world_states, _ = run_episode(

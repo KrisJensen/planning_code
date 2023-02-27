@@ -25,7 +25,7 @@ model_properties, wall_environment, model_eval = build_environment(
 )
 m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 Nstates = Larena^2
-Naction = wall_environment.properties.dimensions.Naction
+Naction = wall_environment.dimensions.Naction
 Nin_base = Naction + 1 + 1 + Nstates + 2 * Nstates
 Nout, Nhidden, Nin = m.model_properties.Nout, m.model_properties.Nhidden, m.model_properties.Nin
 Lplan = model_properties.Lplan
@@ -45,7 +45,7 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
     # run a handful of steps
     batch = 1002
     Random.seed!(2)
-    ed = wall_environment.properties.dimensions
+    ed = wall_environment.dimensions
     Nstates, Naction, T = ed.Nstates,  ed.Naction, ed.T
     world_state, agent_input = wall_environment.initialize(
         zeros(2), zeros(2), batch, m.model_properties
@@ -188,7 +188,7 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
         just_planned = Bool.(zeros(batch))
         just_planned[ .~teleport ] .= true #just planned with no reward
         rew, agent_input, world_state, predictions = wall_environment.step(
-                    agent_output, a, world_state, wall_environment.properties, m.model_properties, m, h_rnn
+                    agent_output, a, world_state, wall_environment.dimensions, m.model_properties, m, h_rnn
                 )
         path = reshape(world_state.planning_state.plan_input[1:(4*Lplan), :], 4, Lplan, batch)
         plan_states = world_state.planning_state.plan_cache

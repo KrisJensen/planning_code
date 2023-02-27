@@ -62,15 +62,14 @@ function get_wall_input(state, wall_loc)
 end
 
 function gen_input(
-    world_state, ahot, rew, ep, model_properties
+    world_state, ahot, rew, ed, model_properties
 )
     batch = size(rew, 2)
     newstate = world_state.agent_state
     wall_loc = world_state.environment_state.wall_loc
-    Larena = ep.dimensions.Larena
-    Naction = ep.dimensions.Naction
-    Nstates = ep.dimensions.Nstates
-    shot = onehot_from_state(Larena, newstate) #one-hot encoding (Nstates x batch)
+    Naction = ed.Naction
+    Nstates = ed.Nstates
+    shot = onehot_from_state(ed.Larena, newstate) #one-hot encoding (Nstates x batch)
     wall_input = get_wall_input(newstate, wall_loc) #get input about walls
     Nwall_in = size(wall_input, 1)
     Nin = model_properties.Nin

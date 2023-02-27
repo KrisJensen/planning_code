@@ -27,9 +27,9 @@ for seed = seeds
     m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 
     batch = 1
-    ed = wall_environment.properties.dimensions
+    ed = wall_environment.dimensions
     Nout, Nhidden = m.model_properties.Nout, m.model_properties.Nhidden
-    Nstates, Naction, T = ed.Nstates,  ed.Naction, ed.T
+    Nstates, T = ed.Nstates, ed.T
 
     nreps = 5000
     nreps = 1000
@@ -153,7 +153,7 @@ for seed = seeds
                     #if iplan % 10 == 1 println("planning ", iplan) end
                     planning_state, plan_inds, (path, all_Vs, found_rew, plan_states) = planner.planning_algorithm(world_state,
                                                                     ahot,
-                                                                    wall_environment.properties,
+                                                                    wall_environment.dimensions,
                                                                     agent_output,
                                                                     donut_plan,
                                                                     planner,
@@ -203,7 +203,7 @@ for seed = seeds
 
                 ### now update environment dynamics ###
                 rew, world_state, predictions, ahot, teleport = act_and_receive_reward(
-                    a, world_state, planner, wall_environment.properties, agent_output, m, h_rnn, m.model_properties
+                    a, world_state, planner, wall_environment.dimensions, agent_output, m, h_rnn, m.model_properties
                 )
 
                 @assert sum(planning_state.plan_input[1:4]) == sum(world_state.planning_state.plan_input[1:4])
@@ -216,7 +216,7 @@ for seed = seeds
                     )
                 #println(world_state.planning_state.plan_input[28:34])
     
-                agent_input = gen_input(world_state, ahot, rew, wall_environment.properties, m.model_properties)
+                agent_input = gen_input(world_state, ahot, rew, wall_environment.dimensions, m.model_properties)
                 rew[rew .< 0f0] .= 0f0
                 rew[.~active] .= 0f0
 

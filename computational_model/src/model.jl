@@ -38,7 +38,7 @@ function create_model_name(
     Nhidden::Int,
     T::Int,
     seed,
-    Lplan::Int,
+    Lplan::Int;
     prefix = ""
 )
     #define some useful model name

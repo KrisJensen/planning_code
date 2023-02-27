@@ -26,7 +26,6 @@ for seed = seeds
         )
         m = ModularModel(model_properties, network, policy, prediction, forward_modular)
         Nstates = Larena^2
-        Naction = wall_environment.properties.dimensions.Naction
 
         tic = time()
         L, ys, rews, as, world_states, hs = run_episode(

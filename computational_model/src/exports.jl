@@ -37,7 +37,7 @@ export onehot_from_state,
 export WallState
 
 # train.jl
-export gmap, gmap_grads_pred
+export gmap
 
 # io.jl
 export recover_model, save_model

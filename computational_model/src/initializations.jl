@@ -23,9 +23,9 @@ function gen_maze_walls(
     return wall_loc
 end
 
-function initialize_arena(reward_location, agent_state, batch, model_properties, environment_properties, initial_plan_state;initial_params = [])
+function initialize_arena(reward_location, agent_state, batch, model_properties, environment_dimensions, initial_plan_state;initial_params = [])
     Zygote.ignore() do
-        Larena=environment_properties.dimensions.Larena; Nstates = Larena^2
+        Larena=environment_dimensions.Larena; Nstates = Larena^2
         rew_loc = rand(Categorical(ones(Nstates) / Nstates), batch)
         if maximum(reward_location) <= 0
             reward_location = zeros(Float32, Nstates, batch) #Nstates x batch
@@ -53,9 +53,9 @@ function initialize_arena(reward_location, agent_state, batch, model_properties,
             planning_state = initial_plan_state(batch)
         )
 
-        ahot = zeros(Float32, environment_properties.dimensions.Naction, batch) #should use 'Naction' from somewhere
+        ahot = zeros(Float32, environment_dimensions.Naction, batch) #should use 'Naction' from somewhere
         rew = zeros(Float32, 1, batch) #no reward or actions yet
-        x = gen_input(world_state, ahot, rew, environment_properties, model_properties)
+        x = gen_input(world_state, ahot, rew, environment_dimensions, model_properties)
 
         return world_state, Float32.(x)
     end

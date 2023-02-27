@@ -1,8 +1,8 @@
 using Distributions
 
-function model_tree_search(goal, world_state, model, h_rnn, plan_inds, times, ep, mp, planner; Print = false)
+function model_tree_search(goal, world_state, model, h_rnn, plan_inds, times, ed, mp, planner; Print = false)
 
-    Larena, Naction = ep.dimensions.Larena, ep.dimensions.Naction
+    Larena, Naction = ed.Larena, ed.Naction
     Nstates = Larena^2
 
     batch = size(h_rnn, 2)
@@ -90,7 +90,7 @@ function model_tree_search(goal, world_state, model, h_rnn, plan_inds, times, ep
                 )
 
         ### generate input ###
-        agent_input = gen_input(new_world_state, ahot[:, not_finished], rew, ep, mp)
+        agent_input = gen_input(new_world_state, ahot[:, not_finished], rew, ed, mp)
 
     end
     return path, all_Vs, found_rew, plan_states
@@ -98,7 +98,7 @@ end
 
 function model_planner(world_state,
     ahot,
-    ep,
+    ed,
     agent_output,
     at_rew,
     planner,
@@ -110,9 +110,9 @@ function model_planner(world_state,
     true_transition = false
 )
 
-    Larena = ep.dimensions.Larena
-    Naction = ep.dimensions.Naction
-    Nstates = ep.dimensions.Nstates
+    Larena = ed.Larena
+    Naction = ed.Naction
+    Nstates = ed.Nstates
     batch = size(ahot, 2)
     times = world_state.environment_state.time
 
@@ -121,7 +121,7 @@ function model_planner(world_state,
     goal = [argmax(rpred[:, b]) for b = 1:batch] #index of ML goal location
 
     ### agent-driven planning ###
-    path, all_Vs, found_rew, plan_states = model_tree_search(Larena, goal, world_state, model, h_rnn, plan_inds, times, ep, mp, planner, Print = Print, true_transition = true_transition)
+    path, all_Vs, found_rew, plan_states = model_tree_search(goal, world_state, model, h_rnn, plan_inds, times, ed, mp, planner, Print = Print)
 
     xplan = zeros(planner.Nplan_in, batch)
     for b = 1:batch

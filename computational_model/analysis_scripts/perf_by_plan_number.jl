@@ -30,15 +30,13 @@ model_properties, wall_environment, model_eval = build_environment(
     arena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions
 )
 m = ModularModel(model_properties, network, policy, prediction, forward_modular)
-Nstates = Larena^2
-Naction = wall_environment.properties.dimensions.Naction
-Nin_base = Naction + 1 + 1 + Nstates + 2 * Nstates
-Nout, Nhidden = m.model_properties.Nout, m.model_properties.Nhidden
 
 # run a handful of steps
 batch = 1
-ed = wall_environment.properties.dimensions
+ed = wall_environment.dimensions
 Nstates, Naction, T = ed.Nstates,  ed.Naction, ed.T
+Nin_base = Naction + 1 + 1 + Nstates + 2 * Nstates
+Nout, Nhidden = m.model_properties.Nout, m.model_properties.Nhidden
 
 tmax = 50
 Lplan = model_properties.Lplan
@@ -104,7 +102,7 @@ for ictrl = [1;2] #plan input or not
 
                 exploit[rew[:] .> 0.5] .= true #exploitation phase
                 rew, agent_input, world_state, predictions = wall_environment.step(
-                            agent_output, a, world_state, wall_environment.properties, m.model_properties, m, h_rnn#, plan = (planning_state, plan_inds)
+                            agent_output, a, world_state, wall_environment.dimensions, m.model_properties, m, h_rnn#, plan = (planning_state, plan_inds)
                         )
                 if rew[1] > 0.5
                     Print && println("found rew!!!")

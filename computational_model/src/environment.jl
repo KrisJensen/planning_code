@@ -6,10 +6,10 @@ struct EnvironmentDimensions
     Larena::Int
 end
 
-struct Environment{T}
+struct Environment
     initialize::Function
     step::Function
-    dimensions::EnvironmentDimensions{T}
+    dimensions::EnvironmentDimensions
 end
 
 struct WorldState

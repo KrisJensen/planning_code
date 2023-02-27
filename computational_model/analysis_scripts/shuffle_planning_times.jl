@@ -23,11 +23,10 @@ for seed = seeds
         model_properties, wall_environment, model_eval = build_environment(
             hps["Larena"], hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions, no_planning = shuffle)
         m = ModularModel(model_properties, network, policy, prediction, forward_modular)
-        Naction = wall_environment.properties.dimensions.Naction
         environment = wall_environment
 
         tic = time()
-        ed = environment.properties.dimensions
+        ed = environment.dimensions
         Nout = m.model_properties.Nout
         Nhidden = m.model_properties.Nhidden
         T = ed.T
@@ -62,7 +61,7 @@ for seed = seeds
 
             active = (world_state.environment_state.time .< (T+1 - 1e-2)) #active heads
             rew, agent_input, world_state, predictions = environment.step(
-                agent_output, a, world_state, environment.properties, m.model_properties,
+                agent_output, a, world_state, environment.dimensions, m.model_properties,
                 m, h_rnn
             )
             rew, agent_input, a = zeropad_data(rew, agent_input, a, active) #mask if episode is finished

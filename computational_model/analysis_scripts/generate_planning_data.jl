@@ -22,9 +22,7 @@ for seed = seeds
         Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions
     )
     m = ModularModel(model_properties, network, policy, prediction, forward_modular)
-
     Nstates = Larena^2
-    Naction = wall_environment.properties.dimensions.Naction
 
     ##
     Random.seed!(1)
