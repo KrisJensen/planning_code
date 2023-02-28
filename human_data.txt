@@ -1,0 +1,4 @@
+Our human behavioral data is stored as an .sqlite file.
+
+For all analyses, the first 8 guided trials and first 2 non-guided trials were discarded to allow subjects to get used to the task.
+

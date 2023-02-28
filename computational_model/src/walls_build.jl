@@ -1,9 +1,13 @@
+
+#In this script, we instantiate the RL environment which include initialize() and step() functions.
+
 using Flux, Statistics, Random, Distributions, StatsFuns, Zygote, PyPlot, Logging
 
+"""function that computes things like the input and output dimensionality of the network"""
 function useful_dimensions(Larena, planner)
-    Nstates = Larena^2
-    Nstate_rep = 2
-    Naction = 5
+    Nstates = Larena^2 #number of states in arena
+    Nstate_rep = 2 #dimensionality of the state representation (e.g. '2' for x,y-coordinates)
+    Naction = 5 #number of actions available
     Nout = Naction + 1 + Nstates #actions and value function and prediction of state + reward
     Nwall_in = 2 * Nstates #provide full info
     Nin = Naction + 1 + 1 + Nstates + Nwall_in #5 actions, 1 rew, 1 time, L^2 states, some walls

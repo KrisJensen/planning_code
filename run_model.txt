@@ -9,8 +9,9 @@ julia --project=.
 ]
 instantiate
 rm Flux
-Pkg.add(Pkg.PackageSpec(;name="Flux", version="0.13.4"))
 rm BSON
+using Pkg
+Pkg.add(Pkg.PackageSpec(;name="Flux", version="0.13.5"))
 Pkg.add(Pkg.PackageSpec(;name="BSON", version="0.3.5"))
 
 

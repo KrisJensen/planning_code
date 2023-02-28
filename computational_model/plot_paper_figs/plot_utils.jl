@@ -1,6 +1,4 @@
 import Pkg
-#Pkg.activate("/scratches/sagarmatha/ktj21_2/research/meta-rl/to-plan-or-not-to-plan/")
-Pkg.activate("/scratches/enigma/ktj21/hennequin/metaRL/to-plan-or-not-to-plan/")
 Pkg.activate("../")
 using Revise
 using PyPlot, PyCall, Distributions, Random
@@ -14,11 +12,9 @@ global fsize_label = 12
 global cm = 1 / 2.54
 global datadir = "../analysis_scripts/results/"
 global figdir = "./figs/"
-global widdir = "/scratches/enigma/ktj21/hennequin/widloski/"
 global lw_wall = 5
 global lw_arena = 1.3
 global linewidth = 3
-global weiji = true #whether to use Weiji's thinking time estimates
 global npermute = 10000 #how many permutations for permutation tests
 global plot_points = true # plot individual data points for n < 10 (required by NN)
 global capsize = 3.5
@@ -83,87 +79,6 @@ function plot_comparison(ax, data; xticklabs = ["", ""], ylab = "", xlab = nothi
     #println(ylims, " ", yticks)
     if ~isnothing(yticks) ax.set_yticks(yticks) end
     ax.set_title(plot_title, fontsize = fsize)
-end
-
-py"""
-import pickle
-def load_pickle(fpath):
-    with open(fpath, "rb") as f:
-        data = pickle.load(f)
-    return data
-"""
-load_pickle = py"load_pickle"
-
-function load_exp_data(;summary = false)
-    ### load experimental analyses ###
-
-    if summary
-        resdir = widdir*"results/summary_data/"
-    else
-        resdir = widdir*"results/decoding/"
-    end
-
-    fnames = readdir(resdir); fnames = fnames[[~occursin("succ", f) for f = fnames]]
-    rnames = [f[10:length(f)-2] for f = fnames]
-    res_dict = Dict()
-    for (i_f, f) = enumerate(fnames)
-        res = load_pickle("$resdir$f")
-        res_dict[rnames[i_f]] = res
-    end
-    return rnames, res_dict
-end
-
-
-function plot_G_schematic(ax)
-
-    p_bbox = patch.FancyBboxPatch((0, 0.1), 1, 0.9,
-    boxstyle="Round,pad=0.00,rounding_size=0.1",
-    ec="k", fc="grey", alpha = 0.3
-    )
-    ax.add_patch(p_bbox)
-
-    p_bbox2 = patch.FancyBboxPatch((0, -1.0), 1, 0.9,
-    boxstyle="Round,pad=0.00,rounding_size=0.1",
-    ec="k", fc="grey", alpha = 0.3
-    )
-    ax.add_patch(p_bbox2)
-
-    x1, x2, x3 = 0.15, 0.5, 0.85
-    dx, dy = 0.5, 0.30
-    y1, y2, y3 = 0.23, 0.39, 0.85
-    size = 10
-    hl, hw, lw = 0.08,0.06,1.5
-
-    function draw_arrow(x,y,dx,dy)
-    plt.arrow(x, y, dx, dy, color = "k", head_length = hl, head_width = hw, lw = lw, length_includes_head = true)
-    end
-    function text(x, y, s)
-    plt.text(x, y, s, ha = "center", va = "center", size = size)
-    end
-
-    text(x1, y1, L"$h_1$")
-    text(x3, y1, L"$h_2$")
-    text(x2, y2-0.03, L"$\Delta h^\mathrm{PG}$")
-    text(x2, y3, L"$\hat{\tau}, R_{\hat{\tau}}$")
-    draw_arrow(x1+0.1, y1, dx, 0)
-    draw_arrow(x2, y3-0.12, 0, -dy+0.06)
-
-    text(x1, -y1, L"$h_1$")
-    text(x3, -y1, L"$h_2$")
-    text(x2, -y2-0.02, L"$\Delta h^\mathrm{RNN}$")
-    text(x1, -y3, L"$\hat{\tau}, R_{\hat{\tau}}$")
-    text(x3, -y3, L"$x_f$")
-    draw_arrow(x1+0.1, -y1, dx, 0)
-    draw_arrow(x1+0.17, -y3, dx-0.07, 0)
-    draw_arrow(x1, -y1-0.15, 0, -dy)
-    draw_arrow(x3, -y3+0.15, 0, dy)
-
-    plt.text(-0.08, 0.57, "PG", rotation = 90, ha = "center", va = "center", size = size*1.2)
-    plt.text(-0.08, -0.52, "RNN", rotation = 90, ha = "center", va = "center", size = size*1.2)
-
-    ax.set_xlim(-0.1, 1.01)
-    ax.set_ylim(-1.01, 1.01)
-    ax.axis("off")
 end
 
 ### lognormal helper functions ###

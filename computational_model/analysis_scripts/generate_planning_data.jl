@@ -4,18 +4,15 @@ using ToPlanOrNotToPlan
 using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
 using BSON: @save
 
-loss_hp = LossHyperparameters(0, 0, 0, 0, 0, 0, 1000, true, 0f0, () -> ())
-Save = true
-
+loss_hp = LossHyperparameters(0, 0, 0, 0)
 greedy_actions = true
-no_planning = false
 seeds = 61:65
 epoch = plan_epoch
 
 for seed = seeds
-    fname = "N100_T50_seed$(seed)_Lplan8_$epoch"
+    fname = "N100_T50_Lplan8_seed$(seed)_$epoch"
     println("loading ", fname)
-    network, opt, store, hps, policy, prediction = recover_model("../models/maze/$fname", modular = true);
+    network, opt, store, hps, policy, prediction = recover_model("../models/$fname");
 
     Larena = hps["Larena"]
     model_properties, wall_environment, model_eval = build_environment(

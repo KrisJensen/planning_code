@@ -4,8 +4,6 @@ using ToPlanOrNotToPlan
 using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
 using BSON: @save
 
-loss_hp = LossHyperparameters(0, 0, 0, 0, 0, 0, 1000, true, 0f0, () -> ())
-
 greedy_actions = true
 seeds = 61:65
 epoch = plan_epoch
@@ -19,7 +17,7 @@ for seed = seeds
     for shuffle = [false; true]
         Random.seed!(1)
 
-        network, opt, store, hps, policy, prediction = recover_model("../models/maze/N100_T50_seed$(seed)_Lplan8_$epoch", modular = true)
+        network, opt, store, hps, policy, prediction = recover_model("../models/maze/N100_T50_seed$(seed)_Lplan8_$epoch")
         model_properties, wall_environment, model_eval = build_environment(
             hps["Larena"], hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions, no_planning = shuffle)
         m = ModularModel(model_properties, network, policy, prediction, forward_modular)

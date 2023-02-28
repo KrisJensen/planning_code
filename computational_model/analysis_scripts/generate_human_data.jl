@@ -4,10 +4,8 @@ using ToPlanOrNotToPlan
 using NaNStatistics, MultivariateStats, Flux, Random, Statistics, SQLite, DataFrames
 using ImageFiltering, StatsBase
 using BSON: @save
-Save = true
 
 for game_type = ["play"; "follow"]
-
 
 ### build RL environment ###
 T = 100
@@ -16,78 +14,43 @@ environment_dimensions = EnvironmentDimensions(Larena^2, 2, 5, T, Larena)
 
 all_RTs, all_trial_nums, all_trial_time, all_rews, all_states, all_shot = [], [], [], [], [], []
 all_wall_loc, all_ps, all_as = [], [], []
-ages, sexes = [], []
 Nepisodes = []
 
-
-db = SQLite.DB("../human_data/prolific_data.sqlite")
-
+db = SQLite.DB("../../human_data/prolific_data.sqlite")
 users = (DBInterface.execute(db, "SELECT id FROM users") |> DataFrame)[:, "id"]
-sizes = zeros(length(users))
-total_times = zeros(length(users))
-tokens = []
-for (i, id) = enumerate(users)
-    user_eps = DBInterface.execute(db, "SELECT * FROM episodes WHERE user_id = "*string(id[1])) |> DataFrame
-    println(id, " ", size(user_eps))
-    sizes[i] = size(user_eps, 1)
-    if sizes[i] > 0.5
-        total_times[i] = (user_eps[end, "start_time"] - user_eps[1, "start_time"])/1000 #in seconds
+if game_type == "play" nskip = 2 else nskip = 8 end #number of initial episodes to discard
+
+for user_id = users
+    user_eps = DBInterface.execute(db, "SELECT * FROM episodes WHERE user_id = "*string(user_id[1])) |> DataFrame #episode data
+    usize = size(user_eps, 1) #total number of episodes for this user
+    info = DBInterface.execute(db, "SELECT * FROM users WHERE id = "*string(user_id)) |> DataFrame
+    if (usize >= 58) && (length(info[1, "token"]) == 24) #finished task and prolific-sized token
+        println(user_id)
+        rews, as, states, wall_loc, ps, times, trial_nums, trial_time, RTs, shot = extract_maze_data(db, user_id, Larena, max_RT = Inf, game_type = game_type, skip_init = nskip)
+        append!(all_RTs, [RTs])
+        append!(all_rews, [rews])
+        append!(all_trial_nums, [trial_nums])
+        append!(all_trial_time, [trial_time])
+        append!(all_states, [states])
+        append!(all_shot, [shot])
+        append!(all_wall_loc, [wall_loc])
+        append!(all_ps, [ps])
+        append!(all_as, [as])
+        append!(Nepisodes, size(ps, 2))
     end
-
-    info = DBInterface.execute(db, "SELECT * FROM users WHERE id = "*string(id)) |> DataFrame
-    append!(sexes, [info[1, "sex"]])
-    append!(ages, info[1, "age"])
-    push!(tokens, info[1, "token"])
-end
-
-println(sizes)
-tokenLs = [length(token) for token = tokens]
-
-conditions = (
-    (sizes .>= 58) #6+40+12
-    .& (tokenLs .== 24) #length of prolific token
-)
-
-valid_users = users[ conditions ]
-if game_type == "play" nskip = 2 else nskip = 8 end
-bins = 1:100:2000
-
-for (i, user_id) = enumerate(valid_users)
-    rews, as, states, wall_loc, ps, times, trial_nums, trial_time, RTs, shot = extract_maze_data(db, user_id, Larena, max_RT = Inf, game_type = game_type, skip_init = nskip)
-    append!(all_RTs, [RTs])
-    append!(all_rews, [rews])
-    append!(all_trial_nums, [trial_nums])
-    append!(all_trial_time, [trial_time])
-    append!(all_states, [states])
-    append!(all_shot, [shot])
-    append!(all_wall_loc, [wall_loc])
-    append!(all_ps, [ps])
-    append!(all_as, [as])
-    append!(Nepisodes, size(ps, 2))
 end
 valid_users = 1:length(all_rews)
-##
 
 data = [all_states, all_ps, all_as, all_wall_loc, all_rews, all_RTs, all_trial_nums, all_trial_time]
 @save "$(datadir)/human_all_data_$game_type.bson" data
 
 data = Dict("all_rews" => all_rews, "all_RTs" => all_RTs)
-Save && @save "$(datadir)/human_RT_and_rews_$game_type.bson" data
-
-sexes, ages = shuffle(sexes), shuffle(ages)
-
-total_rews = [sum(rews .> 0.5) for rews = all_rews]
-total_pay = total_rews * 0.002
-println(total_pay)
-
-println([size(rews, 1) for rews = all_rews])
-println("reward rates: ", [sum(rews .> 0.5)/size(rews, 1) for rews = all_rews])
+@save "$(datadir)/human_RT_and_rews_$game_type.bson" data
 
 cat_RTs, cat_rews, cat_trial_nums, cat_trial_time, cat_as = [reduce(vcat, arr) for arr = [all_RTs, all_rews, all_trial_nums, all_trial_time, all_as]]
 cat_states, cat_shot = reduce(hcat, all_states), reduce(hcat, all_shot)
 cat3(x1, x2) = cat(x1, x2, dims = 3)
 cat_ps, cat_wall_loc = reduce(hcat, all_ps), reduce(cat3, all_wall_loc)
-
 
 ### compute steps per trial
 function comp_rew_by_step(rews; Rmin = 3)
@@ -106,8 +69,7 @@ end
 
 μs, ss = [], []
 Rmin = 4
-
-for i = 1:length(valid_users)
+for i = valid_users
     μ, s = comp_rew_by_step(all_rews[i], Rmin = Rmin)
     push!(μs, μ)
     push!(ss, s)
@@ -116,10 +78,9 @@ end
 ss = reduce(hcat, ss)
 
 data = [Rmin, μs, ss]
-Save && @save "$(datadir)/human_by_trial_$game_type.bson" data
+@save "$(datadir)/human_by_trial_$game_type.bson" data
 
 ## RT by difficulty
-
 function human_RT_by_difficulty(as, T, rews, ps, wall_loc, Larena, trial_nums, trial_time, RTs, states)
     trials = 15
     new_RTs = zeros(trials, size(as, 1), T) .+ NaN
@@ -133,24 +94,11 @@ function human_RT_by_difficulty(as, T, rews, ps, wall_loc, Larena, trial_nums, t
                 new_RTs[trial, b, 1:length(inds)] = RTs[b, inds] #reaction times
                 state = states[:, b, inds[1]] #initial state
                 new_dists[trial, b] = min_dists[Int(state[1]), Int(state[2])]
-                if rand() < 0.002
-                    println(new_dists[trial, b], " ", length(inds))
-                end
             end
         end
     end
     return new_RTs, new_dists
 end
-
-new_RTs, new_dists = human_RT_by_difficulty(cat_as, T, cat_rews, cat_ps, cat_wall_loc, Larena, cat_trial_nums, cat_trial_time, cat_RTs, cat_states)
-
-dists = 1:8
-dats = [new_RTs[(new_dists.==dist), :] for dist in dists]
-
-data = [dists, dats, cat_trial_nums, cat_trial_time, cat_RTs]
-using BSON: @save
-Save && @save "$(datadir)RT_by_complexity_$game_type.bson" data
-
 
 ### repeat by person ###
 RTs, dists = [], []
@@ -159,8 +107,7 @@ for u = valid_users
     push!(RTs, new_RTs); push!(dists, new_dists)
 end
 data = [RTs, dists, all_trial_nums, all_trial_time]
-using BSON: @save
-Save && @save "$(datadir)RT_by_complexity_by_user_$game_type.bson" data
+@save "$(datadir)RT_by_complexity_by_user_$game_type.bson" data
 
 ## compute RT by unique states visited ##
 

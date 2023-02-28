@@ -4,7 +4,7 @@ using ToPlanOrNotToPlan
 using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
 using BSON: @save
 
-loss_hp = LossHyperparameters(0, 0, 0, 0, 0, 0, 1000, true, 0f0, () -> ())
+loss_hp = LossHyperparameters(0, 0, 0, 0)
 
 greedy_actions = true
 seeds = 61:65
@@ -19,7 +19,7 @@ for seed = seeds
     for plan = [false; true]
         Random.seed!(1)
 
-        network, opt, store, hps, policy, prediction = recover_model("../models/maze/N100_T50_seed$(seed)_Lplan8_$epoch", modular = true)
+        network, opt, store, hps, policy, prediction = recover_model("../models/maze/N100_T50_seed$(seed)_Lplan8_$epoch")
         Larena = hps["Larena"]
         model_properties, wall_environment, model_eval = build_environment(
             Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions,no_planning = (~plan)

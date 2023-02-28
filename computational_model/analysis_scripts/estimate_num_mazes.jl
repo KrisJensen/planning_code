@@ -4,7 +4,7 @@ using ToPlanOrNotToPlan
 using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics, Zygote
 using BSON: @save, @load
 
-network, opt, store, hps, policy, prediction = recover_model("../models/maze/N100_T50_seed61_Lplan8_1000", modular = true)
+network, opt, store, hps, policy, prediction = recover_model("../models/maze/N100_T50_seed61_Lplan8_1000")
 model_properties, wall_environment, model_eval = build_environment(
     hps["Larena"], hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = true
 )

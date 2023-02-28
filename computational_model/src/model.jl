@@ -44,10 +44,10 @@ function create_model_name(
     #define some useful model name
     mod_name =
         prefix*
-        "_N$Nhidden" *
+        "N$Nhidden" *
         "_T$T" *
-        "_seed$seed" *
-        "_Lplan$Lplan"
+        "_Lplan$Lplan" *
+        "_seed$seed"
 
     return mod_name
 end

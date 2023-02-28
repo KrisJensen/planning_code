@@ -11,7 +11,6 @@ global cm = 1 / 2.54
 global datadir = "./results/"
 global figdir = "../figs/maze/"
 
-#rc("font", family="serif", serif="calibri")
 rc("font", size = fsize)
 rc("pdf", fonttype = 42)
 rc("lines", linewidth = 5)

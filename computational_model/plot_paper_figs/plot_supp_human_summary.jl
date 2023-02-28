@@ -35,11 +35,10 @@ Larena = 4; ed = EnvironmentDimensions(4^2, 2, 5, 50, Larena)
 @load "$(datadir)/human_all_data_follow.bson" data;
 all_states, all_ps, all_as, all_wall_loc, all_rews, all_RTs, all_trial_nums, all_trial_time = data
 all_opts = []
-#keep = 1:100; Nkeep = 100
 for i = keep
     opts = []
     for b = 1:size(all_as[i], 1)
-        dists = dist_to_rew(all_ps[i][:, b:b], all_wall_loc[i][:, :, b:b], arena)
+        dists = dist_to_rew(all_ps[i][:, b:b], all_wall_loc[i][:, :, b:b], Larena)
         if sum(all_rews[i][b, :]) > 0.5
             for t = findall(all_rews[i][b,:] .> 0.5)[1]+1:sum(all_as[i][b,:] .> 0.5)
                 pi_opt = optimal_policy(Int.(all_states[i][:,b,t]), all_wall_loc[i][:,:,b], dists, ed)
@@ -62,15 +61,11 @@ ax.set_ylabel(L"$p$"*"(optimal)")
 ### plot process and action time distributions ###
 
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.90, right=1.0, bottom = 0, top = 1.0, wspace=0.40)
-@load "$(datadir)process_and_action_times_mode_follow.bson" data
-process_times, action_times = data
 
-if weiji
-    @load "$datadir/guided_lognormal_params_delta.bson" params #mu, sigma, delta
-    #note labels are swapped
-    action_times = params["initial"][:, 3]+exp.(params["initial"][:, 1]+params["initial"][:, 2].^2/2)
-    process_times = params["later"][:, 3]+exp.(params["later"][:, 1]+params["later"][:, 2].^2/2)
-end
+@load "$datadir/guided_lognormal_params_delta.bson" params #mu, sigma, delta
+#note labels are swapped
+action_times = params["initial"][:, 3]+exp.(params["initial"][:, 1]+params["initial"][:, 2].^2/2)
+process_times = params["later"][:, 3]+exp.(params["later"][:, 1]+params["later"][:, 2].^2/2)
 
 ax = fig.add_subplot(grids[1,1])
 mus = [mean(action_times[keep]); mean(process_times[keep])]
@@ -78,8 +73,7 @@ ss = [std(action_times[keep]); std(process_times[keep])]
 ax.bar(1:2, mus, color = col_c)
 ax.scatter(ones(Nkeep)+randn(Nkeep)*0.1, action_times[keep], marker = ".", s = 6, color = "k")
 ax.scatter(ones(Nkeep)*2+randn(Nkeep)*0.1, process_times[keep], marker = ".", s = 6, color = "k")
-ax.set_xticks(1:2, ["action"; "process"], rotation = 45, ha = "right")
-if weiji ax.set_xticks(1:2, ["initial"; "later"], rotation = 45, ha = "right") end
+ax.set_xticks(1:2, ["initial"; "later"], rotation = 45, ha = "right")
 ax.set_ylabel("time (ms)")
 
 ### add labels and save ###
@@ -102,3 +96,7 @@ close()
 
 println("correlation between thinking time and optimality: ", rcor, ", p = ", mean(ctrls .> rcor))
 println("correlation between play and follow: ", cor(mean_RTs[1][keep], mean_RTs[2][keep]))
+
+#rcor2 = cor(RTs[all_opts .> 0.8], all_opts[all_opts .> 0.8])
+#ctrls2 = zeros(10000); for i = 1:10000 ctrls2[i] = cor(RTs[all_opts .> 0.8], all_opts[all_opts .> 0.8][randperm(sum(all_opts .> 0.8))]) end
+#println("correlation between thinking time and optimality: ", rcor2, ", p = ", mean(ctrls2 .> rcor2))

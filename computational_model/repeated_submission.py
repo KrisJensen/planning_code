@@ -8,7 +8,6 @@ import subprocess as sb
 import os
 import numpy as np
 import datetime
-loads, load_epochs, load_fnames = [], [], ["" for seed in seeds] #some defaults for loading previous models
 
 ### set parameters ###
 Nhidden = "100" # number of hidden units
@@ -18,6 +17,8 @@ T = "50" # maximum time in units of physical actions
 last_save = "1000" # number of model iterations
 lrate = "1e-3" #learning rate
 prefix = "" #prefix something to filename
+
+loads, load_epochs, load_fnames = [], [], ["" for seed in seeds] #some defaults for loading previous models
 
 def generate_submission_file(seed, load = "false", load_epoch = "0", load_fname = ""):
 
@@ -35,8 +36,8 @@ def generate_submission_file(seed, load = "false", load_epoch = "0", load_fname 
     if load_fname != "":
         options += " --load_fname "+load_fname
     options += " --lrate "+lrate
-    options += " --prefix "+prefix
-    options += " --n_epochs "+str(last_save+1)
+    if len(prefix) > 0: options += " --prefix "+prefix
+    options += " --n_epochs "+str(int(last_save)+1)
     options += """ " """
 
     substring = """#!/bin/bash

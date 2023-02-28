@@ -33,7 +33,6 @@ function get_wall_rep(wallstr, arena)
             s1, s2 = subseps[i][j:(j + 1)]
             entries = split(col[((s1 + 2):(s2 - 2))], ",")
             for entry in entries
-                #println(i, " ", j, " ", entry, " ", length(entry))
                 if length(entry) > 0.5
                     new_walls[ind, wdict[entry]] = 1
                 end
@@ -44,7 +43,7 @@ function get_wall_rep(wallstr, arena)
 end
 
 function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = "play",
-                            skip_init = 1, skip_finit = 0, Print = true)
+                            skip_init = 1, skip_finit = 0)
     Nstates = Larena^2
 
     epis = DataFrame(DBInterface.execute(
@@ -58,14 +57,11 @@ function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = 
     end
 
     ids = epis[:, "id"] #episode ids
-    #inds = 3:(length(ids) - 2) #indices
-    inds = (1+skip_init):(length(ids)-skip_finit) #discard first episode
-    ids = ids[inds] #discard first and last trial
+    inds = (1+skip_init):(length(ids)-skip_finit) #allow for discarding the first/last few episodes
+    ids = ids[inds]
     batch_size = length(ids)
 
-    rewards, rews, as, times = zeros(batch_size, T),
-    zeros(batch_size, T), zeros(batch_size, T),
-    zeros(batch_size, T)
+    rews, as, times = zeros(batch_size, T), zeros(batch_size, T), zeros(batch_size, T)
     states = ones(2, batch_size, T)
     trial_nums, trial_time = zeros(batch_size, T), zeros(batch_size, T)
     wall_loc, ps = zeros(16, 4, batch_size), zeros(16, batch_size)
@@ -81,13 +77,11 @@ function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = 
             [parse(Int, epis[inds[b], "reward"][i]) for i in [2; 4]] .+ 1
         )
         Tb = size(steps, 1) #steps on this trial
-        Print && println(user_id, " ", b, " ", Tb)
 
         for i in reverse(1:Tb) #steps are stored in reverse order
             t = steps[i, "step"]
             if t > 0.5 #last action of previous episode can carry over
                 times[b, t] = steps[i, "action_time"]
-                rewards[b, t] = steps[i, "reward"]
                 rews[b, t] = Int(steps[i, "outcome"] == "[\"Hit_reward\"]")
                 as[b, t] = adict[steps[i, "action_type"]]
                 states[:, b, t] = [parse(Int, steps[i, "agent"][j]) for j in [2; 4]] .+ 1
@@ -104,12 +98,10 @@ function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = 
 
     RTs = [times[:, 1:1] (times[:, 2:T] - times[:, 1:(T - 1)])]
     RTs[RTs .< 0.5] .= NaN #end of trial
-    Print && println(nanstd(RTs))
     for b in 1:batch_size
         rewtimes = findall(rews[b, 1:T] .> 0.5)
-        RTs[b, rewtimes .+ 1] .-= (8 * 50) #after update
+        RTs[b, rewtimes .+ 1] .-= (8 * 50) #after update; subtract the 400 ms showing that we are at reward
     end
-    Print && println(nanstd(RTs))
 
     shot = zeros(Nstates, size(states, 2), size(states, 3)) .+ NaN
     for b in 1:size(states, 2)
@@ -117,10 +109,10 @@ function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = 
         shot[:, b, 1:Tb] = onehot_from_state(Larena, Int.(states[:, b, 1:Tb]))
     end
 
+    inds = 1:size(RTs, 1)
     if max_RT < Inf
         inds = findall(nanmaximum(RTs[:, 1:end]; dims=2)[:] .<= max_RT) #discard trials with a big break
     end
-    Print && println(length(inds) / batch_size)
     return (
         rews[inds, :],
         as[inds, :],

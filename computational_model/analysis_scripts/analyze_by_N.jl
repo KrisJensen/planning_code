@@ -3,7 +3,7 @@ using ToPlanOrNotToPlan
 using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
 using BSON: @save, @load
 
-loss_hp = LossHyperparameters(0, 0, 0, 0, 0, 0, 1000, true, 0f0, () -> ())
+loss_hp = LossHyperparameters(0, 0, 0, 0)
 Save = true
 
 greedy_actions = true

@@ -18,7 +18,7 @@ single_sim = true #only allow a single simulation in trial 2
 
 for seed = seeds
     fname = "$(prefix)N$(N)_T50_seed$(seed)_Lplan$(Lplan)$(prior)_$(epoch)"
-    network, opt, store, hps, policy, prediction = recover_model("../models/maze/$fname", modular = true)
+    network, opt, store, hps, policy, prediction = recover_model("../models/maze/$fname")
 
     Larena = hps["Larena"]
     model_properties, wall_environment, model_eval = build_environment(

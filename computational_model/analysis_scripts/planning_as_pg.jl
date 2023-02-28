@@ -5,7 +5,6 @@ using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
 using BSON: @save, @load
 
 epoch = plan_epoch
-loss_hp = LossHyperparameters(0, 0, 0, 0, 0, 0, 1000, true, 0f0, () -> ())
 Save = true
 greedy_actions = true
 

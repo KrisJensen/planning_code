@@ -12,9 +12,7 @@ prefix = ""
 
 function run_perf_by_plan_number(;seeds, prefix, N, Lplan, epoch, greedy_actions)
 
-loss_hp = LossHyperparameters(0, 0, 0, 0, 0, 0, 1000, true, 0f0, () -> ())
 Save = true
-
 loaddir = "../models/maze/"
 resdir, figdir = "./results/", "../figs/maze/"
 res_dict = Dict()

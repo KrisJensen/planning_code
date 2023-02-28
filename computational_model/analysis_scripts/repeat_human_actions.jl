@@ -10,10 +10,9 @@ prefix = ""
 epoch = plan_epoch
 N = 100; Lplan = 8
 
-function repeat_actions(;seeds, prefix, epoch, prior, greedy_actions, N, Lplan)
+function repeat_actions(;seeds, prefix, epoch, greedy_actions, N, Lplan)
 
 game_type = "play"
-loss_hp = LossHyperparameters(0, 0, 0, 0, 0, 0, 1000, true, 0, () -> ())
 
 ## load human data
 
@@ -68,10 +67,9 @@ for i = keep
     as_p, ys_p, pplans_p, Nplans_p = [], [], [], []
     dists_to_rew_p, new_states_p = [], []
     for seed = seeds
-        #println("seed: $seed")
-        fname = "$(prefix)N$(N)_T50_seed$(seed)_Lplan$(Lplan)$(prior)_$epoch"
+        fname = "$(prefix)N$(N)_T50_seed$(seed)_Lplan$(Lplan)_$epoch"
         println(fname)
-        network, opt, store, hps, policy, prediction = recover_model("../models/maze/$fname", modular = true)
+        network, opt, store, hps, policy, prediction = recover_model("../models/maze/$fname")
         model_properties, wall_environment, model_eval = build_environment(
             hps["Larena"], hps["Nhidden"], hps["T"], Lplan = hps["Lplan"],
             greedy_actions = greedy_actions
@@ -283,11 +281,11 @@ data = Dict("residuals" => allres, "correlations" => allsims, "RTs" => alldat1, 
             "N_plans_by_u" => N_plans_by_u, "N_plans" => reduce(vcat, N_plans_by_u),
             "trial_nums_by_u" => trialnums_by_u, "anums_by_u" => anums_by_u)
 
-savename = "$(prefix)N$(N)_Lplan$(Lplan)$(prior)$(trialstr)_$epoch"
+savename = "$(prefix)N$(N)_Lplan$(Lplan)$(trialstr)_$epoch"
 @save "$datadir/RT_predictions_$savename.bson" data
 end
 
 end
 
 run = true
-run && repeat_actions(;seeds, prefix, epoch, prior, greedy_actions, N, Lplan)
+run && repeat_actions(;seeds, prefix, epoch, greedy_actions, N, Lplan)
