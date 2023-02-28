@@ -5,29 +5,16 @@ using BSON: @save, @load
 
 epoch = plan_epoch
 loss_hp = LossHyperparameters(0, 0, 0, 0)
-Save = true
-
 greedy_actions = true
-no_planning = false
-seeds = 61:65
-seed = 61
 
-loaddir = "../models/"
-resdir = "../validate_data/data/"
 res_dict = Dict()
-
 for seed = seeds
 
 println("\n new seed $(seed)!")
 res_dict[seed] = Dict()
 
-filename = "$loaddir/N100_T50_seed$(seed)_Lplan8_$epoch"
-
-@load filename * "_hps.bson" hps
-@load filename * "_progress.bson" store
-@load filename * "_mod.bson" network
-@load filename * "_policy.bson" policy
-@load filename * "_prediction.bson" prediction
+fname = "N100_T50_Lplan8_seed$(seed)_$epoch"
+network, opt, store, hps, policy, prediction = recover_model("../models/$fname");
 
 Larena = hps["Larena"]
 model_properties, wall_environment, model_eval = build_environment(
@@ -37,11 +24,7 @@ m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 
 Nstates, Naction = wall_environment.dimensions.Nstates, wall_environment.dimensions.Naction
 
-
-## compare imagined trajectories to this Neuron paper!
-
 # initialize
-
 Random.seed!(2)
 batch = 25000
 ed = wall_environment.dimensions
@@ -55,7 +38,6 @@ h_rnn = m.network[GRUind].cell.state0 .+ Float32.(zeros(Nhidden, batch)) #expand
 rew = zeros(batch)
 
 # run a handful of steps
-
 exploit = Bool.(zeros(batch))
 tmax = 200
 Lplan = model_properties.Lplan
@@ -178,8 +160,6 @@ for b = 1:batch
     end
 end
 
-println(mean(agent_opt_as, dims = 1)[1, 1:40])
-
 ## plot wall conformity
 
 function get_action(Larena, s1, s2)
@@ -228,10 +208,6 @@ res_dict[seed]["batch_rand_wall_probs"] = batch_rand_wall_probs
 μ, s = mean(batch_wall_probs), std(batch_wall_probs)/sqrt(batch)
 μr, sr = mean(batch_rand_wall_probs), std(batch_rand_wall_probs)/sqrt(batch)
 
-println(μ, " ", s)
-println(μr, " ", sr)
-
-
 ## now look at fraction of successful replays
 true_succs, false_succs = [], []
 for b = 1:batch
@@ -248,11 +224,7 @@ res_dict[seed]["false_succs"] = false_succs
 μ, s = mean(true_succs), std(true_succs)/sqrt(length(true_succs))
 μr, sr = mean(false_succs), std(false_succs)/sqrt(length(false_succs))
 
-println(μ, " ", s)
-println(μr, " ", sr)
-
 ## now look at p(goal | plan number)
-
 maxL = 5
 for cv = [false; true]
 if cv succ, cvstr = success_cv, "_cv" else succ, cvstr = success, "" end
@@ -314,72 +286,12 @@ for b = 1:batch
         push!(nons, mean(plan_as[b, non_inds, 1] .== next_as[b, non_inds]))
     end
 end
-
 res_dict[seed]["follow_succs"] = succs
 res_dict[seed]["follow_non"] = nons
-
 μ, s = mean(succs), std(succs)/sqrt(length(succs))
 μr, sr = mean(nons), std(nons)/sqrt(length(nons))
 
-println(μ, " ", s)
-println(μr, " ", sr)
-
-
-## now look at p(optimal | # plan)
-#probably need to normalize by distance/difficulty
-#repeat for both successful and unsuccessful plans separately
-
-nsucc, nnon, dist, opt = [], [], [], [] #number of replays, distance to goal, and whether action was optimal
-#crit_data = agent_opt_as #criterion for success
-crit_data = Float64.(goal_steps .== goal_dist) #get there in optimal number of steps
-
-for b = 1:batch
-    #println(b)
-    for trial_id = 2:(maximum(trial_ids[b, :])-1)
-        #println(trial_id)
-        inds = findall(trial_ids[b, :] .== trial_id .&& trial_anums[b, :] .== 1)
-        push!(dist, goal_dist[b, inds[1]])
-        push!(opt, crit_data[b, inds[1]])
-        Nrep = length(inds)-1 #how many replays
-        if Nrep == 0
-                push!(nsucc, 0)
-            push!(nnon, 0)
-        else
-                succs = success[b, inds[1:Nrep], rewlocs[b]]
-            push!(nsucc, sum(succs))
-            push!(nnon, Nrep - sum(succs))
-        end
-    end
 end
 
-res_dict[seed]["trial_nsucc"] = nsucc
-res_dict[seed]["trial_nnon"] = nnon
-res_dict[seed]["trial_dist"] = dist
-res_dict[seed]["trial_opt"] = opt
-
-ds = 2:6
-ns = 0:2
-opt_cond = zeros(2, length(ds), length(ns))
-opt_ss = zeros(2, length(ds), length(ns))
-opt_ns = zeros(2, length(ds), length(ns))
-
-for (ic, c) = enumerate([nsucc, nnon])
-    for (id, d) = enumerate(ds)
-        for (in, n) = enumerate(ns)
-            inds = findall(c .== n .&& dist .== d)
-	    opt_cond[ic, id, in] = mean(opt[inds])
-	    opt_ns[ic, id, in] = length(inds)
-	    opt_ss[ic, id, in] = std(opt[inds])
-            println(ic, " ", d, " ", n, " ", length(inds), " ", mean(opt[inds]))
-	end
-    end
-end
-println(cor(nsucc, nnon))
-
-
-
-end
-
-
-@save resdir * "result_dict.bson" res_dict
+@save datadir * "result_dict.bson" res_dict
 

@@ -24,23 +24,13 @@ PyCall.PyDict(matplotlib."rcParams")["font.sans-serif"] = "calibri"
 
 
 ### set global color scheme ###
-global col_h = [0;0;0]/255 # human data
-global col_o = [50;100;255]/255 # original
-global col_a = [50;100;200]/255 # auxiliary loss
-global col_p = [50;100;150]/255 # planning
-global col_e = [50;80;120]/255 # euclidean prior
-
-global col_o = [46;94;76]/255 # original
-global col_a = [92; 194; 168]/255 # auxiliary loss
 global col_p = [76;127;210]/255 # planning
-global col_e = [35;35;110]/255 # euclidean prior
-
 global col_p1 = col_p * 0.88
 global col_p2 = col_p .+ [0.45; 0.35; 0.175]
 
 ### select global models
 global seeds = 61:65
-global plan_epoch = 1000
+global plan_epoch = 350
 
 ### lognormal helper functions ###
 function lognorm(x; mu = 0, sig = 0, delta = 0)

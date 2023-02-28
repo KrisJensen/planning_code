@@ -89,14 +89,14 @@ for seed = seeds
     println(mean(mean_dists), " ", std(mean_dists))
     μ, s = mean(perfs, dims = 1)[:], std(perfs, dims = 1)[:]/sqrt(batch_size)
     data = [Rmin, μ, s, mean(mean_dists)]
-    Save && @save "$(datadir)/model_by_trial$(prior)$seed.bson" data
+    @save "$(datadir)/model_by_trial$seed.bson" data
 
     ## planning by difficulty
 
     trials = 15
-    new_RTs = zeros(trials, batch_size, hps["T"]) .+ NaN
-    new_alt_RTs = zeros(trials, batch_size, hps["T"]) .+ NaN
-    new_dists = zeros(trials, batch_size) .+ NaN
+    new_RTs = zeros(trials, batch_size, hps["T"]) .+ NaN;
+    new_alt_RTs = zeros(trials, batch_size, hps["T"]) .+ NaN;
+    new_dists = zeros(trials, batch_size) .+ NaN;
     for b = 1:batch_size
         #println(b)
         rew = rews[b, :] #rewards in this episode
@@ -133,15 +133,15 @@ for seed = seeds
     dists = 1:8
     dats = [new_RTs[(new_dists.==dist), :] for dist in dists]
     data = [dists, dats]
-    Save && @save "$(datadir)model_RT_by_complexity$(prior)$(seed)_$epoch.bson" data
+    @save "$(datadir)model_RT_by_complexity$(seed)_$epoch.bson" data
     alt_dats = [new_alt_RTs[(new_dists.==dist), :] for dist in dists]
     data = [dists, alt_dats]
-    Save && @save "$(datadir)model_RT_by_complexity_bystep$(prior)$(seed)_$epoch.bson" data
+    @save "$(datadir)model_RT_by_complexity_bystep$(seed)_$epoch.bson" data
 
     ## look at exploration
 
-    RTs = zeros(size(rews)) .+ NaN
-    unique_states = zeros(size(rews)) .+ NaN #how many states had been seen when the action was taken
+    RTs = zeros(size(rews)) .+ NaN;
+    unique_states = zeros(size(rews)) .+ NaN; #how many states had been seen when the action was taken
     for b = 1:batch_size
         inds = findall(trial_ids[b, :] .== 1)
         anums = Int.(trial_anums[b, inds])
@@ -156,7 +156,7 @@ for seed = seeds
     end
 
     data = [RTs, unique_states]
-    Save && @save "$(datadir)model_unique_states$(prior)_$(seed)_$epoch.bson" data
+    @save "$(datadir)model_unique_states_$(seed)_$epoch.bson" data
 
     ## do decoding of rew loc by unique states
     unums = 1:15
@@ -167,21 +167,13 @@ for seed = seeds
         for (i, ind) = enumerate(inds) ahot[Int(as[ind]), i] = 1f0 end
         X = [hs[:, inds]; ahot] #Nhidden x batch x T -> Nhidden x iters
         Y = rew_locs[:, inds]
-        Yhat = m.prediction(X)[18:33, :]
+        Yhat = m.prediction(X)[17:32, :]
         Yhat = exp.(Yhat .- Flux.logsumexp(Yhat; dims=1)) #softmax over states
         perf = sum(Yhat .* Y) / size(Y, 2)
-        #perf = mean(Y[argmax(Yhat[:, i]), i] for i = 1:size(Y, 2))
-
         println("reward ", unum, ": ", perf, "\n")
         dec_perfs[unum] = perf
     end
     data = [unums, dec_perfs]
-    Save && @save "$(datadir)model_exploration_predictions$(prior)_$(seed)_$epoch.bson" data
+    @save "$(datadir)model_exploration_predictions_$(seed)_$epoch.bson" data
 
-    ## perturbation analysis
-    run_perturbation = false
-    if run_perturbation
-        data = run_perturbation_analysis(m, hs, rew_locs, trial_ids, trial_ts, wall_environment, Nstates, hps, res = 1, niter = 1000)
-        Save && @save "$(datadir)/perturbation_data_planning$(prior)$(seed)_$epoch.bson" data
-    end
 end

@@ -12,12 +12,13 @@ function useful_dimensions(Larena, planner)
     Nwall_in = 2 * Nstates #provide full info
     Nin = Naction + 1 + 1 + Nstates + Nwall_in #5 actions, 1 rew, 1 time, L^2 states, some walls
 
-    Nin += planner.Nplan_in
-    Nout += planner.Nplan_out
+    Nin += planner.Nplan_in #additional inputs from planning
+    Nout += planner.Nplan_out #additional outputs for planning
 
     return Nstates, Nstate_rep, Naction, Nout, Nin
 end
 
+"""function that objects the position of the agent given an action (assuming no walls)"""
 function update_agent_state(agent_state, amove, Larena)
     new_agent_state =
         agent_state + [amove[1:1, :] - amove[2:2, :]; amove[3:3, :] - amove[4:4, :]] #2xbatch
@@ -25,6 +26,13 @@ function update_agent_state(agent_state, amove, Larena)
     return new_agent_state
 end
 
+"""
+    act_and_receive_reward(action, world_state, planning, env_dimensions, agent_output, model, hidden_state, model_properties)
+output: reward, new_world_state, ground_truth_predictions, one-hot-action, agent_at_reward?
+This function implements the 'environment' of the RL algorithm.
+It takes as input the output of the agent and the state of the world and returns the new state of the world.
+Note that 'planning' in our formulation takes place in the environment, so the output includes the result of planning.
+"""
 function act_and_receive_reward(
     a, world_state, planner, environment_dimensions, agent_output, model, h_rnn, mp
 )
@@ -35,15 +43,15 @@ function act_and_receive_reward(
     Naction = environment_dimensions.Naction
     Larena = environment_dimensions.Larena
 
-    agent_state_ind = state_ind_from_state(Larena, agent_state) #Batch
-    batch = size(a, 2)
+    agent_state_ind = state_ind_from_state(Larena, agent_state) #extract index
+    batch = size(a, 2) #batch size
     Nstates = Larena^2
 
     ahot = zeros(Naction, batch) #attempted action
     amove = zeros(Naction, batch) #actual movement
+    rew = zeros(Float32, 1, batch) #reward collected
 
-    rew = zeros(Float32, 1, batch)
-
+    #construct array of attempted and actual movements
     for b in 1:batch
         abatch = a[1, b] # action
         ahot[abatch, b] = 1f0 #attempted action
@@ -54,48 +62,51 @@ function act_and_receive_reward(
         end
     end
 
-    new_agent_state = update_agent_state(agent_state, amove, Larena)
+    new_agent_state = update_agent_state(agent_state, amove, Larena) #(x,y) coordinates
     shot = onehot_from_state(Larena, new_agent_state) #one-hot encoding (Nstates x batch)
+    s_index = reduce(vcat, [sortperm(-shot[:, b])[1] for b in 1:batch]) #corresponding index
+    r_index = get_rew_locs(reward_location) #index of reward location
+    predictions = (Int32.(s_index), Int32.(r_index)) #things to be predicted by the agent
 
-    #'s_index' the index corresponding to the agent_state, and 'wall_loc' is the location of the walls
-    s_index = reduce(vcat, [sortperm(-shot[:, b])[1] for b in 1:batch])
-    r_index = get_rew_locs(reward_location)
-    predictions = (Int32.(s_index), Int32.(r_index))
-
-    found_rew = Bool.(reward_location[Bool.(shot)]) #found reward
+    found_rew = Bool.(reward_location[Bool.(shot)]) #moved to the reward
     s_old_hot = onehot_from_state(Larena, agent_state) #one-hot encoding of previous agent_state
     at_rew = Bool.(reward_location[Bool.(s_old_hot)]) #at reward before action
 
     moved = sum(amove[1:4, :]; dims=1)[:] #did I perform a movement? (size batch)
-    rew[1, found_rew .& (moved .> 0.5)] .= 1
+    rew[1, found_rew .& (moved .> 0.5)] .= 1 #get reward if agent moved to reward location
 
+    ### teleport the agents that found the reward on the previous iteration ###
     for b in 1:batch
         if at_rew[b] #at reward
             tele_reward_location = ones(Nstates) / (Nstates - 1) #where can I teleport to (not rew location)
             tele_reward_location[Bool.(reward_location[:, b])] .= 0
-            new_state = rand(Categorical(tele_reward_location), 1, 1)
-            new_agent_state[:, b] = state_from_loc(Larena, new_state)
+            new_state = rand(Categorical(tele_reward_location), 1, 1) #sample new state uniformly at random
+            new_agent_state[:, b] = state_from_loc(Larena, new_state) #convert to (x,y) coordinates
             shot[:, b] .= 0f0; shot[new_state[1], b] = 1f0 #update onehot location
         end
     end
 
+    #run planning algorithm
     planning_state, plan_inds = planner.planning_algorithm(world_state,
                                                             ahot,
                                                             environment_dimensions,
                                                             agent_output,
                                                             at_rew,
-                                                            planner,#)
+                                                            planner,
                                                             model,
                                                             h_rnn,
                                                             mp)
 
-    planned = Bool.(zeros(batch)); planned[plan_inds] .= true #where did we plan?
+    planned = Bool.(zeros(batch)); planned[plan_inds] .= true #which agents within the batch engaged in planning
+
+    #update the time elapsed for each episode
     new_time = copy(environment_state.time)
     new_time[ .~ planned ] .+= 1f0 #increment time for acting
     new_time[planned] .+= planner.planning_time #increment time for planning
 
-    rew[1, planned] .+= planner.planning_cost #cost of planning (in rewards; default 0)
+    rew[1, planned] .+= planner.planning_cost #cost of planning (in units of rewards; default 0)
 
+    #update the state of the world
     new_world_state = WorldState(;
         agent_state=new_agent_state,
         environment_state=WallState(; wall_loc, reward_location, time = new_time),
@@ -105,6 +116,10 @@ function act_and_receive_reward(
     return Float32.(rew), new_world_state, predictions, ahot, at_rew
 end
 
+"""
+    build_environment(arena_size, N_hidden, max_time, planning_depth, greedy_actions, no_planning)
+This function constructs an environment object which includes 'initialize' and 'step' methods for the agent to interact with.
+"""
 function build_environment(
     Larena::Int,
     Nhidden::Int,
