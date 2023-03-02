@@ -1,9 +1,13 @@
 ## A recurrent network model of planning explains hippocampal replay and human behavior
 
 In this repository, we provide code for training and analysing the recurrent planning agent described by Jensen et al. (2023).
-To run the code, julia >= 1.7 should be installed.
+To run the code, julia >= 1.7 should be installed together with all the packages from the Manifest.toml file.
+To install these packages:\
+    `cd ./computational_model`\
+    `julia --project=.`\
+    `using Pkg`\
+    `Pkg.instantiate()`\
 To run the pretrained models, BSON 0.3.5 and Flux 0.13.5 should be installed since backwards compatibility was not preserved for the latest versions of these packages.
-
 The primary script used to train models is './computational_model/walls_train.jl'.
 The primary script used for downstream analyses is './computational_model/analysis_scripts/generate_planning_data.jl'.
 
