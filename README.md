@@ -9,7 +9,8 @@ To install these packages:\
     `Pkg.instantiate()`\
 To run the pretrained models, BSON 0.3.5 and Flux 0.13.5 should be installed since backwards compatibility was not preserved for the latest versions of these packages.
 The primary script used to train models is './computational_model/walls_train.jl'.
-The primary script used for downstream analyses is './computational_model/analysis_scripts/generate_planning_data.jl'.
+The primary script used for downstream analyses of the computational model is './computational_model/analysis_scripts/generate_planning_data.jl'.
+The primary script used for analyses of the human data is './computational_model/analysis_scripts/generate_human_data.jl'
 
 Please note that this repository is still in the process of being cleaned up and documented properly.
 More thorough installation instructions and descriptions of different scripts will be added in due time.

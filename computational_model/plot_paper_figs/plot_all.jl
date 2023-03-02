@@ -4,19 +4,19 @@ include("plot_utils.jl")
 using Suppressor
 @suppress_err begin
 
-#Fig 1
+#Fig 2
 println("\nplotting response time figure")
 include("plot_fig_RTs.jl")
 
-#Fig 2
+#Fig 3
 println("\nplotting RNN behavior figure")
 include("plot_fig_mechanism_behav.jl")
 
-#Fig 3
+#Fig 4
 println("\nplotting replay figure")
 include("plot_fig_replays.jl")
 
-#Fig 4
+#Fig 5
 println("\nplotting PG figure")
 include("plot_fig_mechanism_neural.jl")
 
@@ -41,14 +41,6 @@ include("plot_supp_internal_model.jl")
 #Sfig 5
 println("\nplotting supplementary exploration analyses")
 include("plot_supp_exploration.jl")
-
-#Sfig 6
-println("\nplotting supplementary replay data")
-include("plot_supp_replay_summary.jl")
-
-#Sfig 7
-println("\nplotting supplementary away trial data")
-include("plot_supp_away_analyses.jl")
 
 #Sfig 8
 println("\nplotting supplementary re-plan probabilities")
