@@ -21,7 +21,6 @@ model_properties, wall_environment, model_eval = build_environment(
     Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions
 )
 m = ModularModel(model_properties, network, policy, prediction, forward_modular)
-
 Nstates, Naction = wall_environment.dimensions.Nstates, wall_environment.dimensions.Naction
 
 # initialize

@@ -129,34 +129,37 @@ function build_environment(
     no_planning = false,
 )
 
+    #create planner object
+    #note that planner includes a 'plan_state' which can carry over in more general planning algorithms
     planner, initial_plan_state = build_planner(Lplan, Larena)
-    Nstates, Nstate_rep, Naction, Nout, Nin = useful_dimensions(Larena, planner)
-    model_properties = ModelProperties(Nout, Nhidden, Nin, Lplan, greedy_actions, no_planning)
-    environment_dimensions = EnvironmentDimensions(Nstates, Nstate_rep, Naction, T, Larena)
+    Nstates, Nstate_rep, Naction, Nout, Nin = useful_dimensions(Larena, planner) #compute some useful quantities
+    model_properties = ModelProperties(Nout, Nhidden, Nin, Lplan, greedy_actions, no_planning) #initialize a model property object
+    environment_dimensions = EnvironmentDimensions(Nstates, Nstate_rep, Naction, T, Larena) #initialize an environment dimension object
 
-    ### specify environment function per task ###
+    ### define a 'step' function that updates the environment ###
     function step(agent_output, a, world_state, environment_dimensions, model_properties, model, h_rnn)
 
-        Zygote.ignore() do
+        Zygote.ignore() do #no differentiation through the environment
             rew, new_world_state, predictions, ahot, at_rew = act_and_receive_reward(
                 a, world_state, planner, environment_dimensions, agent_output, model, h_rnn, model_properties
-            )
-
+            ) #take a step through the environment
+            #generate agent input
             agent_input = gen_input(new_world_state, ahot, rew, environment_dimensions, model_properties)
-
+            #return reward, input, world state and ground truths for predictions
             return rew, Float32.(agent_input), new_world_state, predictions
         end
     end
 
+    #create initialization function
     function initialize(reward_location, agent_state, batch, mp; initial_params = [])
         return initialize_arena(reward_location, agent_state, batch, mp, environment_dimensions, initial_plan_state, initial_params=initial_params)
     end
 
+    #construct environment with initialize() and step() functions and a list of dimensions
     environment = Environment(initialize, step, environment_dimensions)
 
     ### task specific evaluation/progress function ####
     function model_eval(m, batch::Int64, loss_hp::LossHyperparameters)
-        #evaluation function; compute mean reward (random is ~T/Nstates*0.8; oracle is (T-Nstates/2)/3)
         Nrep = 5
         means = zeros(Nrep, batch)
         all_actions = zeros(Nrep, batch)
