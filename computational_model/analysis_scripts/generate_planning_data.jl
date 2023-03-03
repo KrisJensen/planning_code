@@ -4,48 +4,51 @@ using ToPlanOrNotToPlan
 using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
 using BSON: @save
 
-loss_hp = LossHyperparameters(0, 0, 0, 0)
-greedy_actions = true
-seeds = 61:65
-epoch = plan_epoch
+loss_hp = LossHyperparameters(0, 0, 0, 0) #not computing losses
+greedy_actions = true #greedy at test time
+seeds = 61:65 #test seeds
+epoch = plan_epoch #test epoch
 
-for seed = seeds
+for seed = seeds #iterate through models trained independently
+
+    # load the model parameters
     fname = "N100_T50_Lplan8_seed$(seed)_$epoch"
     println("loading ", fname)
     network, opt, store, hps, policy, prediction = recover_model("../models/$fname");
 
+    # instantiate model and environment
     Larena = hps["Larena"]
     model_properties, wall_environment, model_eval = build_environment(
         Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions
     )
     m = ModularModel(model_properties, network, policy, prediction, forward_modular)
-    Nstates = Larena^2
 
-    ##
+    # run a bunch of episodes
     Random.seed!(1)
     batch_size = 50000
     tic = time()
     L, ys, rews, as, world_states, hs = run_episode(
         m, wall_environment, loss_hp; batch=batch_size, calc_loss = false
     )
-    states = reduce((a, b) -> cat(a, b, dims = 3), [ws.agent_state for ws = world_states])
-    wall_loc, ps = world_states[1].environment_state.wall_loc, world_states[1].environment_state.reward_location
-    Tmax = size(as, 2)
-    rew_locs = reshape(ps, Nstates, batch_size, 1) .* ones(1, 1, Tmax) #for each time point
-    println(sum(rews .> 0.5) / batch_size, " ", time() - tic)
-    println("planning fraction: ", sum(as .> 4.5) / sum(as .> 0.5))
 
-    ## collect some data
-    plan_states = zeros(batch_size, Tmax, 8);
-    plan_steps = zeros(batch_size, Tmax); #how many steps/actions were planned
+    # extract some data we might need
+    states = reduce((a, b) -> cat(a, b, dims = 3), [ws.agent_state for ws = world_states]) #states over time
+    wall_loc = world_states[1].environment_state.wall_loc #wall location
+    ps = world_states[1].environment_state.reward_location #reward location
+    Tmax, Nstates = size(as, 2), Larena^2 #extract some dimensions
+    rew_locs = reshape(ps, Nstates, batch_size, 1) .* ones(1, 1, Tmax) #for each time point
+    println(sum(rews .> 0.5) / batch_size, " ", time() - tic) #average reward per episode
+
+    # how many steps/actions were planned
+    plan_steps = zeros(batch_size, Tmax);
     for t = 1:Tmax-1
-        plan_states[:, t, :] = world_states[t+1].planning_state.plan_cache';
-        plan_steps[:,t] = sum(plan_states[:, t, :] .> 0.5, dims = 2)[:];
+        plan_steps[:,t] = sum(world_states[t+1].planning_state.plan_cache'; .> 0.5, dims = 2)[:];
     end
 
-    trial_ts = zeros(batch_size, Tmax)
-    trial_ids = zeros(batch_size, Tmax)
-    trial_anums = zeros(batch_size, Tmax) #action number!
+    #extract some trial information
+    trial_ts = zeros(batch_size, Tmax) # network iteration within trial
+    trial_ids = zeros(batch_size, Tmax) # trial number
+    trial_anums = zeros(batch_size, Tmax) # action number (not counting rollouts)
     for b = 1:batch_size
         Nrew = sum(rews[b, :] .> 0.5)
         sortrew = sortperm(-rews[b, :])

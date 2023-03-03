@@ -30,7 +30,7 @@ global col_p2 = col_p .+ [0.45; 0.35; 0.175]
 
 ### select global models
 global seeds = 61:65
-global plan_epoch = 350
+global plan_epoch = 1000
 
 ### lognormal helper functions ###
 function lognorm(x; mu = 0, sig = 0, delta = 0)
