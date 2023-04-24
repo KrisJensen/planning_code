@@ -49,50 +49,50 @@ for seed = seeds #iterate through models trained independently
     trial_ts = zeros(batch_size, Tmax) # network iteration within trial
     trial_ids = zeros(batch_size, Tmax) # trial number
     trial_anums = zeros(batch_size, Tmax) # action number (not counting rollouts)
-    for b = 1:batch_size
-        Nrew = sum(rews[b, :] .> 0.5)
-        sortrew = sortperm(-rews[b, :])
-        rewts = sortrew[1:Nrew]
-        diffs = [rewts; Tmax+1] - [0; rewts]
-        trial_ids[b, :] = reduce(vcat, [ones(diffs[i]) * i for i = 1:(Nrew+1)])[1:Tmax]
-        trial_ts[b, :] = reduce(vcat, [1:diffs[i] for i = 1:(Nrew+1)])[1:Tmax]
+    for b = 1:batch_size #iterate through episodes
+        Nrew = sum(rews[b, :] .> 0.5) #total number of rewards
+        sortrew = sortperm(-rews[b, :]) #indices or sorted array
+        rewts = sortrew[1:Nrew] #times at which we got reward
+        diffs = [rewts; Tmax+1] - [0; rewts] #duration of each trial
+        trial_ids[b, :] = reduce(vcat, [ones(diffs[i]) * i for i = 1:(Nrew+1)])[1:Tmax] #trial number
+        trial_ts[b, :] = reduce(vcat, [1:diffs[i] for i = 1:(Nrew+1)])[1:Tmax] #time within trial
 
-        finished = findall(as[b, :] .== 0)
+        finished = findall(as[b, :] .== 0) #timepoints at which episode is finished
+        #zero out finished steps
         trial_ids[b, finished] .= 0
         trial_ts[b, finished] .= 0
         plan_steps[b, finished] .= 0
 
+        #extract the action number for each iteration
         ep_as = as[b, :]
-        for id = 1:(Nrew+1)
-            inds = findall(trial_ids[b, :] .== id)
-            trial_as = ep_as[inds]
-            anums = zeros(Int64, length(inds))
-            anum = 1
-            for a = 2:length(inds)
-                anums[a] = anum
-                if trial_as[a] <= 4.5 anum +=1 end
+        for id = 1:(Nrew+1) #for each trial
+            inds = findall(trial_ids[b, :] .== id) #indices of this trial
+            trial_as = ep_as[inds] #actions within this trial
+            anums = zeros(Int64, length(inds)) #list of action numbers
+            anum = 1 #start at first action
+            for a = 2:length(inds) #go through all network iterations
+                anums[a] = anum #store the action number
+                if trial_as[a] <= 4.5 anum +=1 end #increment if not a rollout
             end
-            trial_anums[b, inds] = anums
+            trial_anums[b, inds] = anums #store all action numbers
         end
     end
 
     ## look at performance by trial
 
-    Rmin = 4
-    inds = findall(sum(rews, dims = 2)[:] .>= Rmin) #finish at least Rmin trials
-    perfs = reduce(hcat, [[trial_anums[b, trial_ids[b, :] .== t][end] for t = 1:Rmin] for b = inds])'
-    ### compute optimal performance ###
-    mean_dists = zeros(batch_size)
-    shortest_dists = zeros(batch_size, Larena, Larena)
+    Rmin = 4 #only consider trials with >=Rmin reward (to control for correlation between performance and steps-per-trial)
+    inds = findall(sum(rews, dims = 2)[:] .>= Rmin) #episodes with >= Rmin reward
+    perfs = reduce(hcat, [[trial_anums[b, trial_ids[b, :] .== t][end] for t = 1:Rmin] for b = inds])' #performance for each trial number
+
+    # compute optimal baseline
+    mean_dists = zeros(batch_size) # mean goal distances from all non-goal locations
     for b in 1:batch_size
-        dists = dist_to_rew(ps[:, b:b], wall_loc[:, :, b:b], Larena)
-        mean_dists[b] = sum(dists) / (Nstates - 1)
-        shortest_dists[b, :, :] = dists
+        dists = dist_to_rew(ps[:, b:b], wall_loc[:, :, b:b], Larena) #goal distances for this arena
+        mean_dists[b] = sum(dists) / (Nstates - 1) #average across non-goal states
     end
-    println(mean(mean_dists), " ", std(mean_dists))
-    μ, s = mean(perfs, dims = 1)[:], std(perfs, dims = 1)[:]/sqrt(batch_size)
+    μ, s = mean(perfs, dims = 1)[:], std(perfs, dims = 1)[:]/sqrt(batch_size) #compute summary statistics
     data = [Rmin, μ, s, mean(mean_dists)]
-    @save "$(datadir)/model_by_trial$seed.bson" data
+    @save "$(datadir)/model_by_trial$seed.bson" data #store data
 
     ## planning by difficulty
 

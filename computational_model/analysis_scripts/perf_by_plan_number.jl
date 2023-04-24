@@ -156,5 +156,5 @@ savename = "$(prefix)N$(N)_Lplan$(Lplan)"
 
 end
 
-run = false
+run = true
 run && run_perf_by_plan_number(;seeds,N,Lplan,epoch,greedy_actions)
