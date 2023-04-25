@@ -1,4 +1,7 @@
+# in this script, we analyse how model performance depends on the number of rollouts
+# this allow us to investigate whether rollouts improve the policy
 
+# load some packages
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 

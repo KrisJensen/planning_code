@@ -1,3 +1,6 @@
+# in this script, we analyse the timing of rollouts in the RL agent
+# the resulting 'response times' can then be compared with human behavioural data
+
 ## load scripts and model
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
@@ -39,7 +42,7 @@ for seed = seeds #iterate through models trained independently
     # how many steps/actions were planned
     plan_steps = zeros(batch_size, Tmax);
     for t = 1:Tmax-1
-        plan_steps[:,t] = sum(world_states[t+1].planning_state.plan_cache'; .> 0.5, dims = 2)[:];
+        plan_steps[:,t] = sum(world_states[t+1].planning_state.plan_cache' .> 0.5, dims = 2)[:];
     end
 
     #extract some trial information
