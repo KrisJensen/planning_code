@@ -185,10 +185,6 @@ for i = 1:length(all_pplans_p) #iterate through users
     p_plans = mean(reduce((a, b) -> cat(a, b, dims = 3), all_pplans_p[i]), dims = 3)[:, :, 1] #rollout probabilities
     N_plans = mean(reduce((a, b) -> cat(a, b, dims = 3), all_Nplans_p[i]), dims = 3)[:, :, 1] #number of rollouts
 
-    cors = []
-    cors_d = []
-    cors_t = []
-
     #extract data from this user
     as, trial_ts, states, rews, trial_nums = all_as[i], all_trial_time[i], all_states[i], all_rews[i], all_trial_nums[i]
     dists_to_rew, new_states, RTs = all_dists_to_rew_p[i][1], all_new_states_p[i][1], all_RTs_p[i]
@@ -223,7 +219,7 @@ for i = 1:length(all_pplans_p) #iterate through users
     allsims[i, :] = [s_pplan; s_dist; s_ts]
 end
 
-println("by user: ", mean(allsims, dims = 1)[:], " ", std(allsims, dims = 1)[:]/sqrt(length(valid_users)))
+println("by user: ", mean(allsims, dims = 1)[:], " ", std(allsims, dims = 1)[:]/sqrt(size(allsims, 1)))
 
 # let's just save a lot of data and we can select what to plot later
 data = Dict("correlations" => allsims, "RTs_by_u" => RTs_by_u, "pplans_by_u" => p_plans_by_u,

@@ -1,44 +1,48 @@
-include("val_utils.jl")
+#in this script, we repeat the analyses performed for the hippocampal replay data
+
+#load some libraries
+include("anal_utils.jl")
 using ToPlanOrNotToPlan
-using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
-using BSON: @save, @load
+using NaNStatistics
 
-epoch = plan_epoch
-loss_hp = LossHyperparameters(0, 0, 0, 0)
-greedy_actions = true
+epoch = plan_epoch #training epoch to evaluate
+res_dict = Dict() #container for storing results
 
-res_dict = Dict()
-for seed = seeds
+for seed = seeds #iterate through independently trained RL agents
 
 println("\n new seed $(seed)!")
-res_dict[seed] = Dict()
+res_dict[seed] = Dict() #results for this agent
 
-fname = "N100_T50_Lplan8_seed$(seed)_$epoch"
-network, opt, store, hps, policy, prediction = recover_model("../models/$fname");
+filename = "N100_T50_Lplan8_seed$(seed)_$epoch" #model to load
+network, opt, store, hps, policy, prediction = recover_model(loaddir*filename) #load model parameters
 
+#construct RL environment
 Larena = hps["Larena"]
 model_properties, wall_environment, model_eval = build_environment(
     Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions
 )
+#construct RL agent
 m = ModularModel(model_properties, network, policy, prediction, forward_modular)
-Nstates, Naction = wall_environment.dimensions.Nstates, wall_environment.dimensions.Naction
 
-# initialize
-Random.seed!(2)
-batch = 25000
+#extract some useful parameters
 ed = wall_environment.dimensions
 Nout, Nhidden = m.model_properties.Nout, m.model_properties.Nhidden
 Nstates, Naction, T = ed.Nstates,  ed.Naction, ed.T
+
+Random.seed!(2) #set seed for reproducibility
+batch = 25000 #number of environments to consider
+
+#initialize environment
 world_state, agent_input = wall_environment.initialize(
     zeros(2), zeros(2), batch, m.model_properties
 )
 agent_state = world_state.agent_state
 h_rnn = m.network[GRUind].cell.state0 .+ Float32.(zeros(Nhidden, batch)) #expand hidden state
-rew = zeros(batch)
+rew = zeros(batch) #container for storing reward info
 
-# run a handful of steps
+# initialize containers for storing data
+tmax = 200 #number of iterations to run
 exploit = Bool.(zeros(batch))
-tmax = 200
 Lplan = model_properties.Lplan
 plans, plans_cv = [zeros(batch, tmax, Lplan) .+ NaN for _ = 1:2];
 plan_as, plan_as_cv = [zeros(batch, tmax, Lplan) .+ NaN for _ = 1:2];
