@@ -6,7 +6,6 @@ include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
 loss_hp = LossHyperparameters(0, 0, 0, 0) #not computing losses
-greedy_actions = true #greedy at test time
 epoch = plan_epoch #test epoch
 
 for seed = seeds #iterate through models trained independently

@@ -68,7 +68,7 @@ for i = 1:length(keep) #for each participant
         #construct RL environment and instantiate agent
         model_properties, wall_environment, model_eval = build_environment(
             hps["Larena"], hps["Nhidden"], hps["T"], Lplan = hps["Lplan"],
-            greedy_actions = true
+            greedy_actions = greedy_actions
         )
         m = ModularModel(model_properties, network, policy, prediction, forward_modular)
 

@@ -8,7 +8,7 @@ function useful_dimensions(Larena, planner)
     Nstates = Larena^2 #number of states in arena
     Nstate_rep = 2 #dimensionality of the state representation (e.g. '2' for x,y-coordinates)
     Naction = 5 #number of actions available
-    Nout = Naction + 1 + Nstates #actions and value function and prediction of state + reward
+    Nout = Naction + 1 + Nstates #actions and value function and prediction of state
     Nwall_in = 2 * Nstates #provide full info
     Nin = Naction + 1 + 1 + Nstates + Nwall_in #5 actions, 1 rew, 1 time, L^2 states, some walls
 

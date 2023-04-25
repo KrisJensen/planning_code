@@ -14,6 +14,11 @@ global datadir = "./results/"
 global loaddir = "../models/"
 global figdir = "../figs/maze/"
 
+### select global models
+global seeds = 61:65
+global plan_epoch = 1000
+global greedy_actions = true
+
 rc("font", size = fsize)
 rc("pdf", fonttype = 42)
 rc("lines", linewidth = 5)
@@ -30,10 +35,6 @@ PyCall.PyDict(matplotlib."rcParams")["font.sans-serif"] = "calibri"
 global col_p = [76;127;210]/255 # planning
 global col_p1 = col_p * 0.88
 global col_p2 = col_p .+ [0.45; 0.35; 0.175]
-
-### select global models
-global seeds = 61:65
-global plan_epoch = 1000
 
 ### lognormal helper functions ###
 function lognorm(x; mu = 0, sig = 0, delta = 0)

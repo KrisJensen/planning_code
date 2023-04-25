@@ -22,11 +22,11 @@ for seed = seeds #iterate through random seeds
 println("\n new seed $(seed)!")
 res_dict[seed] = Dict() #results for this seed
 filename = prefix*"N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
-network, opt, store, hps, policy, prediction = recover_model(loaddir*filename) #load model
+network, opt, store, hps, policy, prediction = recover_model(loaddir*filename) #load model parameters
 
 Larena = hps["Larena"] #size of the arena
 model_properties, wall_environment, model_eval = build_environment(
-    Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = true
+    Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions
 ) #construct RL environment
 m = ModularModel(model_properties, network, policy, prediction, forward_modular) #construct model
 
