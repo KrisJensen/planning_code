@@ -1,12 +1,9 @@
 ## load scripts and model
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
-using NaNStatistics, MultivariateStats, Flux, PyCall, PyPlot, Random, Statistics
-using BSON: @save
 
 loss_hp = LossHyperparameters(0, 0, 0, 0) #not computing losses
 greedy_actions = true #greedy at test time
-seeds = 61:65 #test seeds
 epoch = plan_epoch #test epoch
 
 for seed = seeds #iterate through models trained independently

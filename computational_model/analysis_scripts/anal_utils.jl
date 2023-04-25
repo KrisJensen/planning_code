@@ -2,14 +2,16 @@ import Pkg
 Pkg.activate("../")
 using Revise
 using PyPlot, PyCall
-using Distributions
+using Distributions, Statistics, Random
 using Flux, Zygote
+using BSON: @save, @load
 @pyimport matplotlib.gridspec as gspec
 
 global fsize = 26
 global fsize_leg = 21
 global cm = 1 / 2.54
 global datadir = "./results/"
+global loaddir = "../models/"
 global figdir = "../figs/maze/"
 
 rc("font", size = fsize)
