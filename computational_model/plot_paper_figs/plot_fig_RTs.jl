@@ -244,7 +244,7 @@ if weiji
 else
     @load "$(datadir)RT_predictions_new$(prior)_$plan_epoch.bson" data
 end
-res, allsims, RTs, pplans, dists, steps = [data[k] for k = ["residuals"; "correlations"; "RTs"; "pplans"; "dists"; "steps"]];
+allsims, RTs, pplans, dists, steps = [data[k] for k = ["correlations"; "RTs"; "pplans"; "dists"; "steps"]];
 bins = 0.05:0.05:0.8
 xs = 0.5*(bins[1:length(bins)-1] + bins[2:end])
 
@@ -330,17 +330,6 @@ println("shuffled correlation: ", mean(shuffs), " ", std(shuffs))
 real = zeros(Nkeep)
 for u = 1:Nkeep real[u] = cor(pplans_by_u[u], RTs_by_u[u]) end
 println("real correlation: ", mean(real), " ", std(real)/sqrt(length(real)))
-
-### residual correlation ###
-
-# grids = fig.add_gridspec(nrows=1, ncols=1, left=0.945, right=1.0, bottom = 0.0, top = top, wspace=0.05)
-# ax = fig.add_subplot(grids[0,0])
-# ress = [res; ]
-# m = mean(ress, dims = 1)[:]
-# s = std(ress, dims = 1)[:] / sqrt(size(allsims, 1))
-# ax.bar(1:1, m, yerr = s, color = [col_p, col_e], capsize = capsize)
-# ax.set_xticks(1:1, ["residual"], rotation = 45, ha = "right", rotation_mode = "anchor")
-# ax.set_xlim(0.25, 1.75)
 
 ### add labels and save ###
 

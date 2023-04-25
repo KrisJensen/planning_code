@@ -18,7 +18,7 @@ for seed = seeds #for each independently trained model
     for plan = [false; true] #no rollouts (false) or rollouts (true)
         Random.seed!(1) #set a seed for reproducibility
 
-        filename = "N100_T50_seed$(seed)_Lplan8_$epoch" #model to load
+        filename = "N100_T50_Lplan8_seed$(seed)_$epoch" #model to load
         network, opt, store, hps, policy, prediction = recover_model(loaddir*filename) #load model parameters
         Larena = hps["Larena"]
         #construct environment, noting whether rollouts are allowed or now
