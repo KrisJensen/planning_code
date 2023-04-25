@@ -89,7 +89,7 @@ function construct_ahot(a, Naction)
 end
 
 """
-    forward_modulat(model, env_dimensions, input, hidden_state)
+    forward_modular(model, env_dimensions, input, hidden_state)
 computes the function h_rnn, y_rnn = phi(h_rnn, x_rnn)
 """
 function forward_modular(mod, ed::EnvironmentDimensions, x, h_rnn)

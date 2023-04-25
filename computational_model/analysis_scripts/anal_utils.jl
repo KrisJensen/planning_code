@@ -3,6 +3,7 @@ Pkg.activate("../")
 using Revise
 using PyPlot, PyCall
 using Distributions
+using Flux, Zygote
 @pyimport matplotlib.gridspec as gspec
 
 global fsize = 26
