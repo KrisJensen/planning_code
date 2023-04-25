@@ -24,7 +24,7 @@ keep = findall(mean_RTs[2] .< 690)
 Nkeep = length(keep) #only keep participants with mean RT < 690 ms during follow
 
 @load "$(datadir)/human_all_data_play.bson" data #load all data from these participants
-all_states, all_ps, all_as, all_wall_loc, all_rews, all_RTs, all_trial_nums, all_trial_time = [dat[keep] for dat = data]
+all_states, all_ps, all_as, all_wall_loc, all_rews, all_RTs, all_trial_nums, all_trial_time = [dat[keep] for dat = data];
 
 #load response time prior parameters
 @load "$datadir/guided_lognormal_params_delta.bson" params
@@ -63,7 +63,6 @@ for i = 1:length(keep) #for each participant
     dists_to_rew_p, new_states_p = [], []
     for seed = seeds #for each model
         fname = prefix*"N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
-        println(fname)
         network, opt, store, hps, policy, prediction = recover_model(loaddir*fname) #load model parameters
 
         #construct RL environment and instantiate agent
@@ -106,7 +105,7 @@ for i = 1:length(keep) #for each participant
             while any(world_state.environment_state.time .< (T+1 - 1e-2)) #continue until time runs out for human or agent
 
                 #forward pass of the RL agent
-                h_rnn, agent_output, a = m.forward(m, ed, agent_input; h_rnn=h_rnn) #RNN step
+                h_rnn, agent_output, a = m.forward(m, ed, agent_input, h_rnn) #RNN step
 
                 for b = 1:batch_size #for each episode
                     if (rew[b] .< 0.5) #did not get reward
@@ -172,8 +171,7 @@ for i = 1:length(keep) #for each participant
     push!(all_new_states_p, new_states_p); push!(all_dists_to_rew_p, dists_to_rew_p)
 end
 
-## perform some analyses with the data collected above
-
+# perform some analyses with the data collected above
 for trial_type = ["explore"; "exploit"] #consider exploration and exploitation trials separately
 if trial_type == "explore" trialstr = "_explore" else trialstr = "" end
 
