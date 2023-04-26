@@ -278,5 +278,5 @@ res_dict[seed]["follow_non"] = nons
 end
 
 #now store all the data
-@save datadir * "result_dict.bson" res_dict
+@save datadir * "model_replay_analyses.bson" res_dict
 

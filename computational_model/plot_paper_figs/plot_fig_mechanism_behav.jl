@@ -76,6 +76,19 @@ grids = fig.add_gridspec(nrows=1, ncols=1, left=0.405, right=0.505, bottom = 0, 
 ax = fig.add_subplot(grids[1,1])
 plot_comparison(ax, ress; xticklabs=["rollout", "no roll"], ylab = "avg. reward", col = col_p, col2 = 1.2*col_p, yticks = [6;7;8], rotation = 45)
 
+### print performance with and without shuffled rollouts ###
+
+# perform a simple analysis of the performance
+@load "$(datadir)/performance_shuffled_planning.bson" results
+ress = zeros(length(seeds), 2)
+for (i, shuffle) = enumerate([true; false])
+    for (iseed, seed) = enumerate(seeds)
+        rews = results[seed][shuffle]
+        ress[iseed, i] = sum(rews) / size(rews, 2)
+    end
+end
+m, s = mean(ress, dims = 1)[:], std(ress, dims = 1)[:]/sqrt(length(seeds))
+println("shuffled performance: ", m, " (", s, ")")
 
 ### plot example goal directed and non-goal directed rollouts ###
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.53, right=0.69, bottom = -0.03, top = 0.80, wspace=0.15)
