@@ -21,7 +21,8 @@ global greedy_actions = true
 global N = 100
 global Lplan = 8
 global prefix = ""
-global epoch = 1000
+global epoch = plan_epoch
+global run_default_analyses = true
 
 rc("font", size = fsize)
 rc("pdf", fonttype = 42)

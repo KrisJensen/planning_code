@@ -5,18 +5,13 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
-println("quantifying trial 2 performance by number of rollouts")
-
-epoch = plan_epoch #training epoch to consider
-prefix = "" #optional model prefix
-N = 100; Lplan = 8 #number of hidden units and planning horizon
-
 """
     run_perf_by_plan_number(;seeds, N, Lplan, epoch, prefix = "")
 analyses the performance (in terms of steps to goal) on trial 2
 as a function of the number of enforced rollouts.
 """
-function run_perf_by_plan_number(;seeds, N, Lplan, epoch, prefix = "")
+function run_perf_by_rollout_number(;seeds, N, Lplan, epoch, prefix = "")
+println("quantifying trial 2 performance by number of rollouts")
 
 res_dict = Dict() #dictionary to store results
 
@@ -125,5 +120,5 @@ savename = "$(prefix)N$(N)_Lplan$(Lplan)"
 
 end
 
-run = true #hacky: do we run with default parameters
-run && run_perf_by_plan_number(;seeds,N,Lplan,epoch)
+#run_default_analyses is a global parameter in anal_utils.jl
+run_default_analyses && run_perf_by_rollout_number(;seeds,N,Lplan,epoch)

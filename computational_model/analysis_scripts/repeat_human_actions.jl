@@ -6,17 +6,12 @@ include("anal_utils.jl")
 using ToPlanOrNotToPlan
 using NaNStatistics
 
-println("analysing rollout probabilities when repeating human actions")
-
-prefix = ""
-epoch = plan_epoch
-N = 100; Lplan = 8
-
 """
     repeat_actions(;seeds, prefix, epoch, N, Lplan)
 This function clamps agents to human trajectories and stores data on the resulting policy
 """
-function repeat_actions(;seeds, prefix, epoch, N, Lplan)
+function repeat_human_actions(;seeds, N, Lplan, epoch, prefix="")
+println("analysing rollout probabilities when repeating human actions")
 
 ## load human data
 @load "$(datadir)/human_RT_and_rews_play.bson" data; data_play = data
@@ -236,5 +231,5 @@ end
 
 end
 
-run = true #small temporary hack
-run && repeat_actions(;seeds, prefix, epoch, N, Lplan) #call analysis function
+#run_default_analyses is a global parameter in anal_utils.jl
+run_default_analyses && repeat_human_actions(;seeds, N, Lplan, epoch) #call analysis function
