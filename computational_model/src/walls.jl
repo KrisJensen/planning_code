@@ -12,7 +12,6 @@ function WallState(; reward_location, wall_loc, time = zeros(1))
     return WallState(reward_location, wall_loc, time)
 end
 
-
 function state_ind_from_state(Larena, state)
     #input is 2 x batch
     #output is (batch, )

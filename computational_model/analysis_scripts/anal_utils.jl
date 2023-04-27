@@ -20,6 +20,7 @@ global plan_epoch = 1000
 global greedy_actions = true
 global N = 100
 global Lplan = 8
+global Larena = 4
 global prefix = ""
 global epoch = plan_epoch
 global run_default_analyses = true

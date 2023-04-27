@@ -36,7 +36,7 @@ for seed = seeds #for each independently trained model
         ) #let the agent act in the environments (parallelized)
 
         #print a brief summary
-        println(seed, " ", plan)
+        println("\n", seed, " rollouts: ", plan)
         println(sum(rews .> 0.5) / batch_size, " ", time() - tic)
         println("planning fraction: ", sum(as .> 4.5) / sum(as .> 0.5))
         results[seed][plan] = rews #write result before moving on

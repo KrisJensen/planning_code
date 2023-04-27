@@ -74,9 +74,9 @@ for seed = seeds #for each independently trained model
         plan_ts = [Set(randperm(Nact[b]-3)[1:Nplan[b]]) for b = 1:batch] #resample the iterations at which I should plan (avoiding last iterations)
 
         #print some summary data
-        println(seed, " ", shuffle)
+        println("\n", seed, " shuffled: ", shuffle)
         println("reward: ", sum(rews .> 0.5) / batch) #reward
-        println("planning fraction: ", sum(as .> 4.5) / sum(as .> 0.5)) #planning fraction
+        println("rollout fraction: ", sum(as .> 4.5) / sum(as .> 0.5)) #planning fraction
         results[seed][shuffle] = rews #store the rewards for this experiment
         
     end
