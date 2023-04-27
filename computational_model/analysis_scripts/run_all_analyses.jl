@@ -13,9 +13,9 @@ include("compare_perf_without_rollout.jl")
 include("shuffle_rollout_times.jl")
 include("behaviour_by_success.jl")
 include("model_replay_analyses.jl")
-#include("rollout_as_pg.jl") (todo)
-#include("analyse_by_N.jl")
+include("rollout_as_pg.jl")
+#include("analyse_by_N.jl") [need to train models]
 include("estimate_num_mazes.jl")
 
 include("quantify_internal_model.jl")
-#include("analyse_hp_sweep.jl") $set run to false in sub scripts (todo)
+#include("analyse_hp_sweep.jl") [need to train models]

@@ -1,7 +1,8 @@
 import Pkg
 Pkg.activate("../")
 using Revise
-using PyPlot, PyCall, Distributions, Random
+using PyPlot, PyCall, LaTeXStrings
+using Random, Statistics, Distributions, Random
 @pyimport matplotlib.gridspec as gspec
 @pyimport matplotlib.patches as patch
 Random.seed!(1)

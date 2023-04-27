@@ -1,5 +1,6 @@
 include("plot_utils.jl")
 using BSON: @load
+using MultivariateStats
 using Random, NaNStatistics, Statistics, LaTeXStrings
 using ToPlanOrNotToPlan
 
@@ -20,7 +21,7 @@ else
 end
 
 ### plot projection of PG stuff ###
-@load "$(datadir)planning_as_pg_new.bson" res_dict
+@load "$(datadir)planning_as_pg.bson" res_dict
 cat3(a, b) = cat(a, b, dims = 3)
 seeds = sort([k for k = keys(res_dict)])
 
@@ -30,18 +31,13 @@ ax = fig.add_subplot(grids[1,1], projection="3d")
 seed = 62
 alphas = res_dict[seed]["jacs"]
 actions = Int.(res_dict[seed]["sim_as"])
-using MultivariateStats
-key = "sim_gs"
-betas = res_dict[seed][key]
+betas = res_dict[seed]["sim_gs"]
 betas = reduce(vcat, [betas[i:i, :, actions[i]] for i = 1:length(actions)])
 pca = MultivariateStats.fit(PCA, (betas .- mean(betas, dims = 1))'; maxoutdim=3)
 Zb = predict(pca, (betas .- mean(betas, dims = 1))')
 Za = predict(pca, (alphas .- mean(alphas, dims = 1))')
 cols = [col_c, col_p, "g", "c"]
 for a = 1:4
-    #if a == 1 lab1, lab2 = L"{\bf \alpha}^{PG}_{\hat{a}_1=1}", L"{\bf \alpha}^{RNN}_{\hat{a}_1=1}"
-    #elseif a == 2 lab1, lab2 = L"{\bf \alpha}^{PG}_{\hat{a}_1=2}", L"{\bf \alpha}^{RNN}_{\hat{a}_1=2}"
-    #else lab1, lab2 = nothing, nothing end
     lab1, lab2 = nothing, nothing
     meanb = mean(Zb[:, actions .== a], dims = 2)[:]
     meanb = meanb / sqrt(sum(meanb.^2))
@@ -70,7 +66,7 @@ meanspca, meanspca2 = [[[[], []] for j = 1:3] for _ = 1:2]
 for (ij, jkey) = enumerate(["jacs"; "jacs_shift"; "jacs_shift2"])
 for seed = seeds
     #println(jkey, " ", seed)
-    cosses, cosses2, sim_as, sim_a2s = [res_dict[seed][k] for k = ["cosses", "cosses2", "sim_as", "sim_a2s"]]
+    sim_as, sim_a2s = [res_dict[seed][k] for k = ["sim_as", "sim_a2s"]]
     sim_as_c, sim_a2s_c = sim_as .% 4 .+ 1, sim_a2s .% 4 .+ 1
     jacs, gs, gs2 = [copy(res_dict[seed][k]) for k = [jkey, "sim_gs", "sim_gs2"]]
     #if jkey != "jacs" jacs = reduce(vcat, jacs) end
