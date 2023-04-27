@@ -14,10 +14,14 @@ global datadir = "./results/"
 global loaddir = "../models/"
 global figdir = "../figs/maze/"
 
-### select global models
+### select default global models
 global seeds = 61:65
 global plan_epoch = 1000
 global greedy_actions = true
+global N = 100
+global Lplan = 8
+global prefix = ""
+global epoch = 1000
 
 rc("font", size = fsize)
 rc("pdf", fonttype = 42)

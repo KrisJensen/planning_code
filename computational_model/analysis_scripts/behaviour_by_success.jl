@@ -1,60 +1,54 @@
+#in this script, we look at the causal effect of replays on behaviour
+#we do this separately for successful and unsuccessful replays
+
+#load some scripts
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
-println("analysing behaviour after successful and unsusccessful replays")
-
-seeds = 61:65
-prior = "_euclidean"
-prior = ""
-prefix = ""
-greedy_actions = true
-N = 100
-Lplan = 8
-epoch = plan_epoch 
+println("analysing behaviour after successful and unsuccessful replays")
 
 function run_planning_causal(;seeds, prefix, N, Lplan, epoch, greedy_actions)
 
-Print = false
-single_sim = true #only allow a single simulation in trial 2
 
-for seed = seeds
-    fname = "$(prefix)N$(N)_T50_seed$(seed)_Lplan$(Lplan)$(prior)_$(epoch)"
-    network, opt, store, hps, policy, prediction = recover_model("../models/maze/$fname")
+for seed = seeds #iterate through independently trained models
 
-    Larena = hps["Larena"]
+    fname = "$(prefix)N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$(epoch)" #model name
+    network, opt, store, hps, policy, prediction = recover_model("$datadir$fname") #load parameters
+
+    Larena = hps["Larena"] #arena size
+    #construct environment
     model_properties, wall_environment, model_eval = build_environment(
-        Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions, no_planning = false
+        Larena, hps["Nhidden"], hps["T"], Lplan = hps["Lplan"], greedy_actions = greedy_actions
     )
-    m = ModularModel(model_properties, network, policy, prediction, forward_modular)
+    m = ModularModel(model_properties, network, policy, prediction, forward_modular) #construct model
 
+    # set some basic parameters
     batch = 1
     ed = wall_environment.dimensions
     Nout, Nhidden = m.model_properties.Nout, m.model_properties.Nhidden
     Nstates, T = ed.Nstates, ed.T
+    nreps = 1000 #number of environments to consider
 
-    nreps = 5000
-    nreps = 1000
-    p_continue_sim = zeros(3, nreps) .+ NaN
-    p_initial_sim = zeros(3, nreps) .+ NaN
-    p_simulated_actions = zeros(3, nreps) .+ NaN
-    p_simulated_actions_old = zeros(3, nreps) .+ NaN
-    time_to_second_rew = zeros(3, nreps) .+ NaN
-    plan_dists = zeros(3, nreps) .+ NaN
-    sim_lengths = zeros(3, nreps) .+ NaN
-    hidden_old = zeros(3, hps["Nhidden"], nreps) .+ NaN
-    hidden_new = zeros(3, hps["Nhidden"], nreps) .+ NaN
-    V_old, V_new, V_sim = [zeros(3, nreps) .+ NaN for _ = 1:3]
-    planning_is = zeros(3, nreps) .+ NaN
+    #intialize some containers for storing variables of interest
+    p_continue_sim = zeros(3, nreps) .+ NaN #probability of doing another rollout
+    p_initial_sim = zeros(3, nreps) .+ NaN #initial probability of rollout
+    p_simulated_actions = zeros(3, nreps) .+ NaN #probability of taking a_hat
+    p_simulated_actions_old = zeros(3, nreps) .+ NaN #initial probability of taking a_hat
+    time_to_second_rew = zeros(3, nreps) .+ NaN #time to get to reward
+    plan_dists = zeros(3, nreps) .+ NaN #distance to reward at rollout time
+    sim_lengths = zeros(3, nreps) .+ NaN #number of rollout actions
+    hidden_old = zeros(3, hps["Nhidden"], nreps) .+ NaN #hidden state before rollout
+    hidden_new = zeros(3, hps["Nhidden"], nreps) .+ NaN #hidden state after rollout
+    V_old, V_new, V_sim = [zeros(3, nreps) .+ NaN for _ = 1:3] #value functions before, after and during rollout
+    planning_is = zeros(3, nreps) .+ NaN #number of attempts to get this scenario
 
-    for rep = 1:nreps
+    for rep = 1:nreps #for each repetition (i.e. newly sampled environment)
+        if rep % 100 == 0 println("environment $rep of $nreps") end
 
-        for (irew, plan_to_rew) = enumerate([true; false; nothing])
+        for (irew, plan_to_rew) = enumerate([true; false; nothing]) #for successful/unsuccessful/no rollout
+            Random.seed!(rep) #set random seed for consistent environment
 
-            Print && println(rep, " plan to rew: ", plan_to_rew)
-            if rep % 100 == 0 println(rep, " plan to rew: ", plan_to_rew) end
-
-            Random.seed!(rep)
-
+            #initialize environment
             world_state, agent_input = wall_environment.initialize(
                 zeros(2), zeros(2), batch, m.model_properties
             )
@@ -62,36 +56,28 @@ for seed = seeds
             h_rnn = m.network[GRUind].cell.state0 .+ Float32.(zeros(Nhidden, batch)) #expand hidden state
             rew = zeros(batch)
             tot_rew = zeros(batch)
-            t_first_rew = 0
+            t_first_rew = 0 #time of first reward
 
-            # run a handful of steps
+            # let the agent act in the world
 
-            exploit = Bool.(zeros(batch))
-            tmax = 200
-            Lplan = model_properties.Lplan
-            planner, initial_plan_state = build_planner(Lplan, Larena)
+            exploit = Bool.(zeros(batch)) #are we in the exploitation phase
+            planner, initial_plan_state = build_planner(Lplan, Larena) #initialize planning module
             all_rews = []
-            sim_a = NaN
-            sim_V = NaN
+            #instantiate some variables
+            sim_a, sim_V, Vt_old, h_old, path, πt_old = NaN, NaN, NaN, NaN, NaN, NaN
             iplan = 0
-            just_planned = false
-            πt_old = NaN
-            Vt_old = NaN
-            h_old = NaN
-            path = NaN
-            stored_plan = false
+            just_planned, stored_plan = false, false
 
             
-            while any(world_state.environment_state.time .< (40+1 - 1e-2))
+            while any(world_state.environment_state.time .< (40 - 1e-2)) #iterate through some trials
 
-                #println("t = ", world_state.environment_state.time)
 
-                h_rnn, agent_output, a = m.forward(m, ed, agent_input; h_rnn=h_rnn) #RNN step agent_output_t = (pi_t(s_t), V_t(s_t)) (nout x batch)
-                active = (world_state.environment_state.time .< (T+1 - 1e-2)) #active heads
-                πt = exp.(agent_output[1:5, :])
-                Vt = agent_output[6, 1]
+                h_rnn, agent_output, a = m.forward(m, ed, agent_input, h_rnn) #RNN step
+                active = (world_state.environment_state.time .< (T+1 - 1e-2)) #active episodes
+                πt = exp.(agent_output[1:5, :]) #current policy
+                Vt = agent_output[6, 1] #current value function
 
-                if just_planned && (~stored_plan)
+                if just_planned && (~stored_plan) #if we just performed a rollout and this is the first one
                     stored_plan = true #we have now stored our plan
                     Print && println("storing plan $iplan $sim_a")
                     p_continue_sim[irew, rep] = πt[5]
@@ -117,7 +103,7 @@ for seed = seeds
                 Vt_old = copy(Vt)
                 h_old = copy(h_rnn)
 
-                if single_sim && (tot_rew[1] == 1) && stored_plan && (a[1] > 4.5)
+                if (tot_rew[1] == 1) && stored_plan && (a[1] > 4.5)
                     #if we're in trial two and have already planned, don't plan any more
                     if greedy_actions
                         a[1] = argmax(πt[1:4])
@@ -235,8 +221,6 @@ for seed = seeds
     @assert all( (plan_dists[1, :] .== plan_dists[2, :])[no_nans] )
     @assert all( abs.(plan_dists[1, :] .- plan_dists[3, :])[no_nans] .< 1.5 )
 
-    if single_sim singlesim_str = "_single" else singlesim_str = "_any" end
-
     data = Dict("plan_dists" => plan_dists, "p_simulated_actions" => p_simulated_actions,
                 "p_simulated_actions_old" => p_simulated_actions_old,
                 "p_continue_sim" => p_continue_sim, "sim_lengths" => sim_lengths,
@@ -244,7 +228,7 @@ for seed = seeds
                 "p_initial_sim" => p_initial_sim, "V_old" => V_old, "V_new" => V_new, "V_sim" => V_sim,
                 "hidden_old" => hidden_old, "hidden_new" => hidden_new, "planning_is" => planning_is)
 
-    @save "$datadir/causal_N$(N)_Lplan$(Lplan)_$(seed)$(prior)_$epoch$singlesim_str.bson" data
+    @save "$datadir/causal_N$(N)_Lplan$(Lplan)_$(seed)_$epoch.bson" data
 
 end
 
