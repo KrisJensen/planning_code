@@ -5,6 +5,8 @@ include("anal_utils.jl")
 using ToPlanOrNotToPlan
 using NaNStatistics
 
+println("repeating biological replay analyses in the RL agent")
+
 epoch = plan_epoch #training epoch to evaluate
 res_dict = Dict() #container for storing results
 

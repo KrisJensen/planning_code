@@ -1,6 +1,7 @@
 include("anal_utils.jl")
-using ToPlanOrNotToPlan, Zygote, Flux, Random, Statistics, Distributions
-using BSON: @save
+using ToPlanOrNotToPlan
+
+println("analysing behaviour after successful and unsusccessful replays")
 
 seeds = 61:65
 prior = "_euclidean"

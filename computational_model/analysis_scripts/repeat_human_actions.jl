@@ -6,6 +6,8 @@ include("anal_utils.jl")
 using ToPlanOrNotToPlan
 using NaNStatistics
 
+println("analysing rollout probabilities when repeating human actions")
+
 prefix = ""
 epoch = plan_epoch
 N = 100; Lplan = 8

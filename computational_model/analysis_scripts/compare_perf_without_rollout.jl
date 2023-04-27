@@ -5,6 +5,8 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
+println("comparing performance with and without rollouts")
+
 loss_hp = LossHyperparameters(0, 0, 0, 0) #we're not computing a loss
 
 greedy_actions = true

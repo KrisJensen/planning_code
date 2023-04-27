@@ -5,6 +5,8 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
+println("analysing the timings of rollouts in the RL agent")
+
 loss_hp = LossHyperparameters(0, 0, 0, 0) #not computing losses
 epoch = plan_epoch #test epoch
 
@@ -36,7 +38,7 @@ for seed = seeds #iterate through models trained independently
     ps = world_states[1].environment_state.reward_location #reward location
     Tmax, Nstates = size(as, 2), Larena^2 #extract some dimensions
     rew_locs = reshape(ps, Nstates, batch_size, 1) .* ones(1, 1, Tmax) #for each time point
-    println(sum(rews .> 0.5) / batch_size, " ", time() - tic) #average reward per episode
+    println("average reward: ", sum(rews .> 0.5) / batch_size, "  time: ", time() - tic) #average reward per episode
 
     # how many steps/actions were planned
     plan_steps = zeros(batch_size, Tmax);
@@ -100,11 +102,9 @@ for seed = seeds #iterate through models trained independently
     new_alt_RTs = zeros(trials, batch_size, hps["T"]) .+ NaN;
     new_dists = zeros(trials, batch_size) .+ NaN;
     for b = 1:batch_size
-        #println(b)
         rew = rews[b, :] #rewards in this episode
         min_dists = dist_to_rew(ps[:, b:b], wall_loc[:, :, b:b], Larena) #minimum distances to goal for each state
         for trial = 2:trials
-            #println(trial)
             if sum(rew .> 0.5) .> (trial - 0.5) #finish trial
                 inds = findall((trial_ids[b, :] .== trial) .& (trial_ts[b, :] .> 1.5)) #all timepoints within trial
 
@@ -125,9 +125,6 @@ for seed = seeds #iterate through models trained independently
                 new_RTs[trial, b, 1:length(RTs)] = RTs #reaction times
                 state = states[:, b, inds[1]] #initial state
                 new_dists[trial, b] = min_dists[Int(state[1]), Int(state[2])]
-                if rand() < 1e-4
-                    println(b, " ", new_dists[trial, b], " ", length(inds))
-                end
             end
         end
     end
@@ -172,7 +169,6 @@ for seed = seeds #iterate through models trained independently
         Yhat = m.prediction(X)[17:32, :]
         Yhat = exp.(Yhat .- Flux.logsumexp(Yhat; dims=1)) #softmax over states
         perf = sum(Yhat .* Y) / size(Y, 2)
-        println("reward ", unum, ": ", perf, "\n")
         dec_perfs[unum] = perf
     end
     data = [unums, dec_perfs]

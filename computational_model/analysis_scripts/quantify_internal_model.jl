@@ -4,6 +4,8 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan, NaNStatistics
 
+println("quantifying accuracy of the internal world model over training")
+
 batch = 1000 #number of environments to consider
 results = Dict() #dictionary for storing results
 

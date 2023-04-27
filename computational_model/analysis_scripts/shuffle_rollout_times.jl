@@ -6,6 +6,8 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
+println("comparing performance with real and shuffled rollout times")
+
 epoch = plan_epoch #model training epoch to use for evaluation (default to final epoch)
 results = Dict() #container for storing results
 batch = 50000 #number of episodes to simulate

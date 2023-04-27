@@ -5,6 +5,8 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
+println("quantifying trial 2 performance by number of rollouts")
+
 epoch = plan_epoch #training epoch to consider
 prefix = "" #optional model prefix
 N = 100; Lplan = 8 #number of hidden units and planning horizon

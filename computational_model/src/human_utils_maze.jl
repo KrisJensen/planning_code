@@ -109,20 +109,16 @@ function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = 
         shot[:, b, 1:Tb] = onehot_from_state(Larena, Int.(states[:, b, 1:Tb]))
     end
 
-    inds = 1:size(RTs, 1)
-    if max_RT < Inf
-        inds = findall(nanmaximum(RTs[:, 1:end]; dims=2)[:] .<= max_RT) #discard trials with a big break
-    end
     return (
-        rews[inds, :],
-        as[inds, :],
-        states[:, inds, :],
-        wall_loc[:, :, inds],
-        ps[:, inds],
-        times[inds, :],
-        trial_nums[inds, :],
-        trial_time[inds, :],
-        RTs[inds, :],
-        shot[:, inds, :],
+        rews,
+        as,
+        states,
+        wall_loc,
+        ps,
+        times,
+        trial_nums,
+        trial_time,
+        RTs,
+        shot,
     )
 end

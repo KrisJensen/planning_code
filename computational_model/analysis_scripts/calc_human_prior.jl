@@ -1,8 +1,8 @@
 ## load scripts and model
 include("anal_utils.jl")
-using BSON: @load, @save
 using ToPlanOrNotToPlan
-using Random, NaNStatistics, Statistics
+
+println("computing prior parameters for human response times")
 
 @load "$(datadir)/human_all_data_follow.bson" data
 _, _, _, _, _, all_RTs_f, all_trial_nums_f, all_trial_time_f = data;

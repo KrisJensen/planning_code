@@ -1,6 +1,8 @@
 # in this script, we call all of the model analysis functions.
 # this may take a while to run unless you have a very big computer
 
+println("running all analyses")
+
 include("analyse_human_data.jl")
 include("calc_human_prior.jl")
 

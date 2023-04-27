@@ -2,7 +2,7 @@ import Pkg
 Pkg.activate("../")
 using Revise
 using PyPlot, PyCall
-using Distributions, Statistics, Random
+using Distributions, Statistics, Random, StatsBase
 using Flux, Zygote
 using BSON: @save, @load
 @pyimport matplotlib.gridspec as gspec
