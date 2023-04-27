@@ -186,8 +186,7 @@ eval $CMD
 def create_model_name( Nhidden, T, seed, Lplan, prefix = ""):
     '''somewhat ugly solution of copying this from julia'''
     #define some useful model name
-    predstr = ""
-    mod_name = prefix+"_N"+Nhidden+"_T"+T+"_seed"+str(seed)+"_Lplan"+Lplan
+    mod_name = prefix+"N"+Nhidden+"_T"+T+"_Lplan"+Lplan+"_seed"+str(seed)
     return mod_name
 
 def last_written_epoch(task, mod_name):
