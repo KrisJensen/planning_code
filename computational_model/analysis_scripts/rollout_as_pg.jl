@@ -57,6 +57,7 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
     all_ts, all_as = zeros(batch, tmax), zeros(batch, tmax) #timepoints and actions
 
     for t = 1:tmax
+        if t % 20 == 0 println("iteration $t of $tmax") end
         #copy over local variables
         agent_input = agent_input
         world_state = world_state
