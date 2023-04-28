@@ -6,7 +6,7 @@ include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
 
-function run_causal_rollouts(;seeds, N, Lplan, epoch; prefix = "")
+function run_causal_rollouts(;seeds, N, Lplan, epoch, prefix = "")
 println("analysing behaviour after successful and unsuccessful replays")
 
 for seed = seeds #iterate through independently trained models

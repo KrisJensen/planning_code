@@ -2,6 +2,7 @@
 # this may take a while to run unless you have a very big computer
 
 println("running all analyses")
+tic = time()
 
 include("analyse_human_data.jl")
 include("calc_human_prior.jl")
@@ -19,3 +20,5 @@ include("estimate_num_mazes.jl")
 
 include("quantify_internal_model.jl")
 #include("analyse_hp_sweep.jl") [need to train models]
+
+println("\nFinished after ", (time()-tic)/60/60, " hours.")
