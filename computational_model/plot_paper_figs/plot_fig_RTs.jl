@@ -1,26 +1,16 @@
-include("plot_utils.jl")
-using BSON: @load
-using Random, NaNStatistics, Statistics
-cm = 1/2.54
+#This script plots Figure 2 of Jensen et al.
 
-prior = ""
-#prior = "_euclidean"
+include("plot_utils.jl") #various global settings
 
-@load "$(datadir)/human_RT_and_rews_follow.bson" data
-keep = findall([nanmean(RTs) for RTs = data["all_RTs"]] .< 690)
-Nkeep = length(keep)
+#get indices of participants to use
+keep = get_human_inds(); Nkeep = length(keep)
 
-#load constant action times
-@load "$(datadir)process_and_action_times_mode_follow.bson" data
-process_times, action_times = data
-
-#load lognormal params
+#load human prior parameters
 @load "$datadir/guided_lognormal_params_delta.bson" params
-#@load "$datadir/guided_lognormal_params.bson" params
 lognormal_params = params
 
-bot, top = 0.62, 0.38
-fig = figure(figsize = (15*cm, 7.5*cm))
+bot, top = 0.62, 0.38 #some figure settings
+fig = figure(figsize = (15*cm, 7.5*cm)) #create figure
 
 ### performance vs trial number ###
 
