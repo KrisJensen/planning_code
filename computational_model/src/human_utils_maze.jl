@@ -57,8 +57,14 @@ function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = 
     end
 
     ids = epis[:, "id"] #episode ids
+
+    #make sure each episode has at least 2 steps
+    stepnums = [size(DataFrame(DBInterface.execute(db, "SELECT * FROM steps WHERE episode_id = " * string(id))), 1) for id = ids]
+    ids = ids[stepnums .> 1.5]
+
     inds = (1+skip_init):(length(ids)-skip_finit) #allow for discarding the first/last few episodes
     ids = ids[inds]
+
     batch_size = length(ids)
 
     rews, as, times = zeros(batch_size, T), zeros(batch_size, T), zeros(batch_size, T)
