@@ -136,8 +136,7 @@ ax.set_xlabel("step within trial")
 ax.set_ylabel("thinking time (ms)")
 ax.set_xticks([1;3;5])
 ax.set_title("human", fontsize = fsize)
-tt_ylims = [0;200]
-ax.set_ylim([50; 280])
+ax.set_ylim([50; 250])
 ax.set_yticks([50;150;250])
 
 
@@ -177,15 +176,16 @@ ax.set_xlabel("step within trial")
 ax.set_ylabel("thinking time (ms)")
 ax.set_xticks([1;3;5])
 ax.set_title("model", fontsize = fsize)
-ax.set_ylim(tt_ylims)
-ax.set_yticks(tt_yticks)
+ax.set_ylim([0; 200])
+ax.set_yticks([0;100;200])
 
 #plot thinking times against the probability of performing a rollout
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.38, right=0.65, bottom = 0.0, top = top, wspace=0.05)
 ax = fig.add_subplot(grids[0,0])
 #load results
 @load "$(datadir)RT_predictions_N100_Lplan8_$(plan_epoch).bson" data
-allsims, RTs, pplans, dists, steps = [data[k] for k = ["correlations"; "RTs"; "pplans"; "dists"; "steps"]];
+allsims, RTs, pplans, dists = [data[k] for k = ["correlations"; "RTs_by_u"; "pplans_by_u"; "dists_by_u"]];
+RTs, pplans, dists = [reduce(vcat, arr) for arr = [RTs, pplans, dists]]
 
 bins = 0.05:0.05:0.8 #bin edges for histogram
 xs = 0.5*(bins[1:length(bins)-1] + bins[2:end]) #bin centers
@@ -208,7 +208,7 @@ ax.set_ylim(0, 250)
 ax.legend(frameon = false, fontsize = fsize_leg)
 
 #compute and print residual correlations
-RTs_by_u, pplans_by_u, dists_by_u, steps_by_u = [data[k] for k = ["RTs_by_u", "pplans_by_u", "dists_by_u", "steps_by_u"]];
+RTs_by_u, pplans_by_u, dists_by_u = [data[k] for k = ["RTs_by_u", "pplans_by_u", "dists_by_u"]];
 allcors = []
 for u = 1:length(RTs_by_u) #for each user
     mean_sub_RTs, mean_sub_pplans = [], [] #residual arrays
@@ -228,9 +228,9 @@ allsims[:, 3] = allcors; #add residual correlation to list of stuff to be plotte
 #plot bar plot of correlations
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.80, right=1.0, bottom = 0.0, top = top, wspace=0.05)
 ax = fig.add_subplot(grids[0,0])
-m = mean(allsims, dims = 1)
-s = std(allsims, dims = 1)[ / sqrt(size(allsims, 1))
-ax.bar(1:n, m, yerr = s, color = [col_p, col_c, col_c][1:n], capsize = capsize)
+m = mean(allsims, dims = 1)[:]
+s = std(allsims, dims = 1)[:] / sqrt(size(allsims, 1))
+ax.bar(1:3, m, yerr = s, color = [col_p, col_c, col_c], capsize = capsize)
 ax.set_yticks([0;0.1;0.2;0.3])
 
 #plot individual data points
@@ -240,9 +240,9 @@ for i_n = 1:3 #for each bar
     ax.scatter(i_n .+ shifts, corrs, color = col_point, marker = ".", s = 3, alpha = 0.5)
 end
 ax.set_yticks([-0.1;0;0.1;0.2;0.3;0.4])
-ax.set_xticks(1:n, [L"$\pi$"*"(rollout)"; "goal dist"; "residual"][1:n], rotation = 45, ha = "right", rotation_mode = "anchor")
+ax.set_xticks(1:3, [L"$\pi$"*"(rollout)"; "goal dist"; "residual"], rotation = 45, ha = "right", rotation_mode = "anchor")
 ax.set_ylabel("correlation with\nthinking time")
-ax.set_xlim(0.25, n + 0.75)
+ax.set_xlim(0.25, 3.75)
 println("mean and sem of correlations: ", m, " ", s) #print results
 
 #perform a shuffle test for reporting chance level correlations
