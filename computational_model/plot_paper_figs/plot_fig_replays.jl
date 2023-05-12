@@ -1,3 +1,5 @@
+#This script plots Figure 4 of Jensen et al.
+
 include("plot_utils.jl")
 using BSON: @load
 using Random, NaNStatistics, Statistics, PyCall

@@ -259,20 +259,14 @@ for u = 1:Nkeep real[u] = cor(pplans_by_u[u], RTs_by_u[u]) end
 println("real correlation: ", mean(real), " ", std(real)/sqrt(length(real)))
 
 ### add labels and save ###
-
-add_labels = true
-if add_labels
-    y1 = 1.07
-    y2 = 0.46
-    x1, x2, x3 = -0.07, 0.28, 0.65
-    fsize = fsize_label
-    plt.text(x1,y1,"A"; ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize, )
-    plt.text(x2-0.04,y1,"C";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize,)
-    plt.text(x3-0.02,y1,"D";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize,)
-    plt.text(x1-0.01,y2,"B";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize,)
-    plt.text(x2-0.01,y2,"E";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize,)
-    plt.text(x3+0.02,y2,"F";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize,)
-end
+y1, y2 = 1.07, 0.46
+x1, x2, x3 = -0.07, 0.28, 0.65
+plt.text(x1,y1,"A"; ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label, )
+plt.text(x2-0.04,y1,"C";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
+plt.text(x3-0.02,y1,"D";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
+plt.text(x1-0.01,y2,"B";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
+plt.text(x2-0.01,y2,"E";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
+plt.text(x3+0.02,y2,"F";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
 
 savefig("./figs/fig_RTs.pdf", bbox_inches = "tight")
 savefig("./figs/fig_RTs.png", bbox_inches = "tight")
