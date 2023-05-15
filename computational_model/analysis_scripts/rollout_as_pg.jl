@@ -132,7 +132,7 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
 
                     for ia = 1:4 #for each action
                         fa(x) = f2(x, ia) #construct function outputting policy for this action
-                        gs = gradient(fa, h_rnn[:, b:b])[1][:] #compute gradient w.r.t. current hidden state
+                        gs = gradient(fa, h_rnn[:, b:b])[1][:] #compute gradient of log \pi(a) w.r.t. current hidden state
                         newgs2[ib, :, ia] = gs #store gradient
                     end
                 end

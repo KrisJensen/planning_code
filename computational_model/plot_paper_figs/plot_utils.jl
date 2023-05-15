@@ -81,7 +81,7 @@ function plot_comparison(ax, data; xticklabs = ["", ""], ylab = "", xlab = nothi
     ax.set_title(plot_title, fontsize = fsize)
 end
 
-### lognormal helper functions ###
+# lognormal helper function
 
 Phi(x) = cdf(Normal(), x) #standard normal pdf
 function calc_post_mean(r; deltahat=0, muhat=0, sighat=0, mode = false)
@@ -100,4 +100,46 @@ function calc_post_mean(r; deltahat=0, muhat=0, sighat=0, mode = false)
     term3 = Phi((log(k2)-muhat)/sighat) - Phi((log(k1)-muhat)/sighat)
     post_delay = (term1*term2/term3 + deltahat) #add back delta for posterior mean delay
     return r - post_delay #posterior mean thinking time is response minus mean delay
+end
+
+# Stats helper function
+
+
+#permutation test
+function permutation_test(arr1, arr2)
+    #test whetter arr1 is larger than arr2
+    rands = zeros(npermute)
+    for n = 1:npermute
+        inds = Bool.(rand(0:1, length(arr1)))
+        b1, b2 = [arr1[inds]; arr2[.~inds]], [arr1[.~inds]; arr2[inds]]
+        rands[n] = nanmean(b1-b2)
+    end
+    trueval = nanmean(arr1-arr2)
+    return rands, trueval
+end
+
+# Experimental data helper function
+
+global replaydir = "../../replay_analyses/"
+global plot_experimental_replays = false # False by default in case we haven't run these analyses
+function load_exp_data(;summary = false)
+    # This function loads experimental replay data
+    # If 'summary' we load summary data for our supplementary figure
+    # Else load the full experimental dataset
+
+    if summary
+        resdir = replaydir*"results/summary_data/"
+    else
+        resdir = replaydir*"results/decoding/"
+    end
+
+    # Filenames to load
+    fnames = readdir(resdir); fnames = fnames[[~occursin("succ", f) for f = fnames]]
+    rnames = [f[10:length(f)-2] for f = fnames] # Animal names+id for each file (i.e. sessions)
+    res_dict = Dict() # Dictionary for storing results
+    for (i_f, f) = enumerate(fnames) # For each file
+        res = load_pickle("$resdir$f") # Load content of file
+        res_dict[rnames[i_f]] = res # Store in our result dict
+    end
+    return rnames, res_dict # Return session names and results
 end
