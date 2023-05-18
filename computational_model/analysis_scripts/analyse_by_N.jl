@@ -8,7 +8,7 @@ using ToPlanOrNotToPlan
 println("analyzing learning and rollouts for different model sizes")
 
 loss_hp = LossHyperparameters(0, 0, 0, 0) #not computing losses
-Nhiddens = 40:20:120 #number of hidden units
+Nhiddens = [60;80;100] #number of hidden units
 epochs = 0:50:1000 #training epochs to consider
 
 
