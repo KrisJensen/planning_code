@@ -10,41 +10,41 @@ prefix = "hp_sweep_"
 Nseed = length(seeds)
 
 ### plot human RT corr ###
-ylims = [0;0.2]; ticks = [0;0.2]
-grids = fig.add_gridspec(nrows=1, ncols=length(params), left=0.04, right=0.47, bottom = bot, top = 1.0, wspace=0.35)
+all_vals, all_errs, all_ticklabels, all_corrs = [], [], [], []
 for (ip, p) = enumerate(params)
     N, Lplan = p
-    savename = "hp_sweep_N$(N)_Lplan$(Lplan)_1000"
-    if weiji savename = savename * "_weiji" end
+    savename = "hp_sweep_N$(N)_Lplan$(Lplan)_1000_weiji"
     @load "$datadir/RT_predictions_$savename.bson" data;
     allsims = data["correlations"]
     m1, s1 = mean(allsims[:, 1]), std(allsims[:, 1])/sqrt(size(allsims, 1))
-    ax = fig.add_subplot(grids[1,ip])
-    ax.bar([1], [m1], yerr = [s1], capsize = capsize,color = col_p)
-    
-    if weiji ax.set_ylim(0,0.22) end
-    ax.set_xticks([1])
-    ax.set_xticklabels([string(p)], rotation = 45, ha = "right")
-    println(p, ": ", m1, " ", s1)
+    push!(all_vals, m1); push!(all_errs, s1)
 
-    if plot_points
-        ylims = [-0.05;0.35]
-        ticks = 0:0.1:0.3
-        corrs = allsims[:, 1]; col = col_point
-        shifts = 1:length(corrs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15
-        ax.scatter(1 .+ shifts, corrs, color = col, marker = ".", s = 3, alpha = 0.5)
-        println(minimum(corrs), " ", maximum(corrs))
-    end
-    ax.set_ylim(ylims)
-    if ip == 1 ylabel("correlation with\nthinking time"); ax.set_yticks(ticks) else yticks([]) end
+    println(p, ": ", m1, " ", s1)
+    corrs = allsims[:, 1]
+    println(minimum(corrs), " ", maximum(corrs))
+    push!(all_corrs, corrs)
+    push!(all_ticklabels, string(p))
 end
+
+grids = fig.add_gridspec(nrows=1, ncols=1, left=0.04, right=0.47, bottom = bot, top = 1.0, wspace=0.35)
+ax = fig.add_subplot(grids[1,1])
+ax.bar(1:length(all_vals), all_vals, yerr = all_errs, capsize = capsize,color = col_p)
+for (i, corrs) = enumerate(all_corrs) # plot individual data points
+    shifts = 1:length(corrs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15
+    ax.scatter(i .+ shifts, all_corrs, color = col_point, marker = ".", s = 3, alpha = 0.5)
+end
+ax.set_xticks(1:length(all_vals))
+ax.set_xticklabels(all_ticklabels, rotation = 45, ha = "right")
+ax.set_ylim(0,0.22)
+ax.set_ylim(-0.05, 0.35)
+ylabel("correlation with\nthinking time"); ax.set_yticks(0:0.1:0.3)
 
 ### plot delta perf with rollouts ###
 
-grids = fig.add_gridspec(nrows=1, ncols=length(params), left=0.57, right=1.0, bottom = bot, top = 1.0, wspace=0.35)
-
+all_vals, all_errs, all_ticklabels, all_diffs = [], [], [], []
 for (ip, p) = enumerate(params)
-    N, Lplan = p; savename = "$(prefix)N$(N)_Lplan$(Lplan)"
+    N, Lplan = p
+    savename = "$(prefix)N$(N)_Lplan$(Lplan)"
     @load "$datadir/perf_by_n_$(savename).bson" res_dict
     seeds = sort([k for k = keys(res_dict)])
     Nseed = length(seeds)
@@ -59,21 +59,25 @@ for (ip, p) = enumerate(params)
     end
     ms = reduce(hcat, ms)
     m1, s1 = mean(ms), std(ms)/sqrt(Nseed)
-
-    ax = fig.add_subplot(grids[1,ip])
-    ax.bar([1], [m1], yerr = [s1], capsize = capsize,color = col_p)
-    if plot_points
-        shifts = 1:length(ms); shifts = (shifts .- mean(shifts))/std(shifts)*0.2
-        ax.scatter(1 .+ shifts, ms, color = col_point, marker = ".", s = 15)
-    end
-    if ip == 1 ylabel(L"$\Delta$"*"steps") else yticks([]) end
-    ax.set_ylim(0, 1.5)
-    ax.set_xticks([1])
-    ax.set_xticklabels([string(p)], rotation = 45, ha = "right")
+    push!(all_vals, m1)
+    push!(all_errs, s1)
+    push!(all_diffs, ms)
+    push!(all_ticklabels, string(p))
 end
 
-### plot delta pi(a1) ###
+grids = fig.add_gridspec(nrows=1, ncols=1, left=0.57, right=1.0, bottom = bot, top = 1.0, wspace=0.35)
+ax = fig.add_subplot(grids[1,1])
+ax.bar(1:length(all_vals), all_vals, yerr = all_errs, capsize = capsize,color = col_p)
+for (i, diffs) = enumerate(all_diffs) # plot individual data points
+    shifts = 1:length(diffs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15
+    ax.scatter(i .+ shifts, all_diffs, color = col_point, marker = ".", s = 3, alpha = 0.5)
+end
+ax.set_xticks(1:length(all_vals))
+ax.set_xticklabels(all_ticklabels, rotation = 45, ha = "right")
+ylabel(L"$\Delta$"*"steps")
+ax.set_ylim(0, 1.5)
 
+### plot delta pi(a1) ###
 
 grids = fig.add_gridspec(nrows=1, ncols=length(params), left=0.00, right=1.0, bottom = 0, top = top, wspace=0.35)
 for (ip, p) = enumerate(params)

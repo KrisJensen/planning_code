@@ -52,5 +52,5 @@ res_dict = Dict("seeds" => seeds,
                 "epochs" => epochs,
                 "meanrews" => meanrews,
                 "planfracs" => pfracs)
-@save datadir * "rew_and_plan_by_n_new.bson" res_dict
+@save datadir * "rew_and_plan_by_n.bson" res_dict
 

@@ -101,8 +101,7 @@ end
 # Plot rollout frequency by network size
 
 # load our stored data
-if false
-@load "$datadir/rew_and_plan_by_n_model.bson" res_dict
+@load "$datadir/rew_and_plan_by_n.bson" res_dict
 # extract the relevant data
 meanrews, pfracs, seeds, Nhiddens, epochs, biases = [res_dict[k] for k = ["meanrews", "planfracs", "seeds", "Nhiddens", "epochs", "biases"]]
 
@@ -131,7 +130,6 @@ ax.set_ylim(0, 0.65)
 ax.set_xticks([0;4;8])
 ax.legend(frameon = false, fontsize = fsize_leg, handlelength=1.5, handletextpad=0.5, borderpad = 0.0,
         labelspacing = 0.05, loc = "lower center", bbox_to_anchor = (0.75, -0.035))
-end
 
 # save figure
 savefig("./figs/fig_mechanism_neural.pdf", bbox_inches = "tight")
