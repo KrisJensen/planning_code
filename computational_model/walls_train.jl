@@ -65,6 +65,10 @@ function parse_commandline()
         help = "Learning rate"
         arg_type = Float64
         default = 1e-3
+        "--constant_rollout_time"
+        help = "Do rollouts take a fixed amount of time irrespective of length"
+        arg_type = Bool
+        default = true
     end
     return parse_args(s)
 end
@@ -89,6 +93,7 @@ function main()
     βp = Float32(args["beta_p"])
     batch_size = Int(args["batch_size"])
     lrate = Float64(args["lrate"])
+    constant_rollout_time = Bool(args["constant_rollout_time"])
 
     Base.Filesystem.mkpath(save_dir)
     Random.seed!(seed) #set random seed
@@ -106,7 +111,7 @@ function main()
 
     #build RL environment
     model_properties, wall_environment, model_eval = build_environment(
-        Larena, Nhidden, T; Lplan
+        Larena, Nhidden, T; Lplan, constant_rollout_time
     )
     # build RL agent
     m = build_model(model_properties, 5)

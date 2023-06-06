@@ -103,14 +103,13 @@ end
 # load our stored data
 @load "$datadir/rew_and_plan_by_n.bson" res_dict
 # extract the relevant data
-meanrews, pfracs, seeds, Nhiddens, epochs, biases = [res_dict[k] for k = ["meanrews", "planfracs", "seeds", "Nhiddens", "epochs", "biases"]]
+meanrews, pfracs, seeds, Nhiddens, epochs = [res_dict[k] for k = ["meanrews", "planfracs", "seeds", "Nhiddens", "epochs"]]
 
 # only consider second epoch onwards
-mms = mean(meanrews, dims = 2)[:, 1, 2:length(epochs)] # mean reward across seeds
-sms = std(meanrews, dims = 2)[:, 1, 2:length(epochs)] / sqrt(length(seeds)) # standard error
-mps = mean(pfracs, dims = 2)[:, 1, 2:length(epochs)] # mean rollout frequency across seeds
-sps = std(pfracs, dims = 2)[:, 1, 2:length(epochs)] / sqrt(length(seeds)) # standard error
-Nhid = length(Nhiddens) # number of network sizes
+mms = mean(meanrews, dims = 2)[:, 1, 3:length(epochs)] # mean reward across seeds
+sms = std(meanrews, dims = 2)[:, 1, 3:length(epochs)] / sqrt(length(seeds)) # standard error
+mps = mean(pfracs, dims = 2)[:, 1, 3:length(epochs)] # mean rollout frequency across seeds
+sps = std(pfracs, dims = 2)[:, 1, 3:length(epochs)] / sqrt(length(seeds)) # standard error
 
 # plot the data
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.87, right=1.0, bottom = 0, top = 1.0, wspace=0.15)

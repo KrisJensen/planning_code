@@ -10,6 +10,7 @@ struct Planner
     planning_time::Float32
     planning_cost::Float32
     planning_algorithm::Function
+    constant_rollout_time::Bool
 end
 
 function none_planner(world_state,
@@ -30,7 +31,7 @@ function none_planner(world_state,
     return planning_state, plan_inds
 end
 
-function build_planner(Lplan, Larena; planning_time = 1f0, planning_cost = 0f0)
+function build_planner(Lplan, Larena; planning_time = 1f0, planning_cost = 0f0, constant_rollout_time = true)
     Nstates = Larena^2
 
     if Lplan <= 0.5
@@ -45,7 +46,7 @@ function build_planner(Lplan, Larena; planning_time = 1f0, planning_cost = 0f0)
         initial_plan_state = (batch -> PlanState([], [])) #we don't use a cache
     end
 
-    planner = Planner(Lplan, Nplan_in, Nplan_out, planning_time, planning_cost, planning_algorithm)
+    planner = Planner(Lplan, Nplan_in, Nplan_out, planning_time, planning_cost, planning_algorithm, constant_rollout_time)
     return planner, initial_plan_state
 end
 
