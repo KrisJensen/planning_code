@@ -6,6 +6,12 @@ include("anal_utils.jl")
 using ToPlanOrNotToPlan
 using NaNStatistics
 
+try
+    println("running default analyses: ", run_default_analyses)
+catch e
+    global run_default_analyses = true
+end
+
 """
     repeat_actions(;seeds, prefix, epoch, N, Lplan)
 This function clamps agents to human trajectories and stores data on the resulting policy
@@ -60,6 +66,7 @@ for i = 1:length(keep) #for each participant
     dists_to_rew_p, new_states_p = [], []
     for seed = seeds #for each model
         fname = prefix*"N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
+        #println("loading ", fname)
         network, opt, store, hps, policy, prediction = recover_model(loaddir*fname) #load model parameters
 
         #construct RL environment and instantiate agent

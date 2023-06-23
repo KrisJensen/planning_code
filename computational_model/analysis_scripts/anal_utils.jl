@@ -23,7 +23,6 @@ global Lplan = 8 #planning horizon
 global Larena = 4 #arena size
 global prefix = "" #model name prefix
 global epoch = plan_epoch #redundant
-global run_default_analyses = true #run analyses when loading analysis functions
 
 ### lognormal helper functions ###
 function lognorm(x; mu = 0, sig = 0, delta = 0)

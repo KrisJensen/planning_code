@@ -5,6 +5,11 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
+try
+    println("running default analyses: ", run_default_analyses)
+catch e
+    global run_default_analyses = true
+end
 
 function run_causal_rollouts(;seeds, N, Lplan, epoch, prefix = "")
 println("analysing behaviour after successful and unsuccessful replays")

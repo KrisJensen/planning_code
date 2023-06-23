@@ -5,6 +5,12 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
+try
+    println("running default analyses: ", run_default_analyses)
+catch e
+    global run_default_analyses = true
+end
+
 """
     run_perf_by_plan_number(;seeds, N, Lplan, epoch, prefix = "")
 analyses the performance (in terms of steps to goal) on trial 2
