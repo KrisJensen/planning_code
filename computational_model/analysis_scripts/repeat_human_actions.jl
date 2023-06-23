@@ -65,7 +65,7 @@ for i = 1:length(keep) #for each participant
     as_p, ys_p, pplans_p, Nplans_p = [], [], [], [] #arrays for storing data
     dists_to_rew_p, new_states_p = [], []
     for seed = seeds #for each model
-        fname = prefix*"N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
+        fname = "N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
         #println("loading ", fname)
         network, opt, store, hps, policy, prediction = recover_model(loaddir*fname) #load model parameters
 

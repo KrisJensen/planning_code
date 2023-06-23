@@ -64,7 +64,7 @@ ylim(0, 1.1*log(4))
 xticks([0;5;10;15])
 yticks([0; 1])
 
-# plot performance with an without rollouts
+# plot performance with and without rollouts
 
 # load data across different random seeds
 @load "$(datadir)/performance_with_out_planning.bson" results
@@ -79,24 +79,25 @@ m, s = mean(ress, dims = 1)[:], std(ress, dims = 1)[:]/sqrt(length(seeds)) # mea
 println("performance with and without rollouts:") #print result
 println(m, " ", s)
 
-# plot result
-grids = fig.add_gridspec(nrows=1, ncols=1, left=0.405, right=0.505, bottom = 0, top = 1, wspace=0.15)
-ax = fig.add_subplot(grids[1,1])
-plot_comparison(ax, ress; xticklabs=["rollout", "no roll"], ylab = "avg. reward", col = col_p, col2 = 1.2*col_p, yticks = [6;7;8], rotation = 45)
-
-# print performance with normal and shuffled rollouts
-
+# also add shuffled rollouts
 # load result across random seeds
 @load "$(datadir)/performance_shuffled_planning.bson" results
-ress = zeros(length(seeds), 2)
+ress_shuff = zeros(length(seeds), 2)
 for (i, shuffle) = enumerate([true; false])
     for (iseed, seed) = enumerate(seeds)
         rews = results[seed][shuffle]
-        ress[iseed, i] = sum(rews) / size(rews, 2)
+        ress_shuff[iseed, i] = sum(rews) / size(rews, 2)
     end
 end
-m, s = mean(ress, dims = 1)[:], std(ress, dims = 1)[:]/sqrt(length(seeds)) #mean and standard error
+m, s = mean(ress_shuff, dims = 1)[:], std(ress_shuff, dims = 1)[:]/sqrt(length(seeds)) #mean and standard error
 println("shuffled performance: ", m, " (", s, ")") #print result
+
+ress = [ress ress_shuff[:, 1:1]]
+
+# plot result
+grids = fig.add_gridspec(nrows=1, ncols=1, left=0.405, right=0.505, bottom = 0, top = 1, wspace=0.15)
+ax = fig.add_subplot(grids[1,1])
+plot_comparison(ax, ress; xticklabs=["rollout", "no roll", "shuffled"], ylab = "avg. reward", col = col_p, col2 = 1.2*col_p, yticks = [6;7;8], rotation = 45)
 
 # plot example goal directed and non-goal directed rollouts
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.53, right=0.69, bottom = -0.03, top = 0.80, wspace=0.15)

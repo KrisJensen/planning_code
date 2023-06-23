@@ -16,7 +16,7 @@ println("analysing behaviour after successful and unsuccessful replays")
 
 for seed = seeds #iterate through independently trained models
 
-    fname = "$(prefix)N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$(epoch)" #model name
+    fname = "N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$(epoch)" #model name
     println("loading $fname")
     network, opt, store, hps, policy, prediction = recover_model("$loaddir$fname") #load parameters
 
@@ -221,7 +221,7 @@ for seed = seeds #iterate through independently trained models
                 "hidden_old" => hidden_old, "hidden_new" => hidden_new, "planning_is" => planning_is)
 
     #write data
-    @save "$datadir/causal_N$(N)_Lplan$(Lplan)_$(seed)_$epoch.bson" data
+    @save "$datadir/$(prefix)causal_N$(N)_Lplan$(Lplan)_$(seed)_$epoch.bson" data
 
 end
 
