@@ -1,6 +1,7 @@
 ## A recurrent network model of planning explains hippocampal replay and human behavior
 
-In this repository, we provide code for training and analysing the recurrent planning agent described by Jensen et al. (2023).
+In this repository, we provide code for training and analysing the reinforcement learning agent described in Jensen et al. (2023): "A recurrent network model of planning explains hippocampal replay and human behavior" (www.biorxiv.org/content/10.1101/2023.01.16.523429v1).
+
 To run the code, julia >= 1.7 should be installed together with all the packages from the Manifest.toml file.
 To install these packages:\
     `cd ./computational_model`\
