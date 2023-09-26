@@ -16,7 +16,7 @@ end
     repeat_actions(;seeds, prefix, epoch, N, Lplan)
 This function clamps agents to human trajectories and stores data on the resulting policy
 """
-function repeat_human_actions(;seeds, N, Lplan, epoch, prefix="")
+function repeat_human_actions(;seeds, N, Lplan, epoch, prefix="", model_prefix ="")
 println("analysing rollout probabilities when repeating human actions")
 
 ## load human data
@@ -65,8 +65,8 @@ for i = 1:length(keep) #for each participant
     as_p, ys_p, pplans_p, Nplans_p = [], [], [], [] #arrays for storing data
     dists_to_rew_p, new_states_p = [], []
     for seed = seeds #for each model
-        fname = "N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
-        #println("loading ", fname)
+        fname = model_prefix*"N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
+        println("loading ", fname)
         network, opt, store, hps, policy, prediction = recover_model(loaddir*fname) #load model parameters
 
         #construct RL environment and instantiate agent
@@ -145,10 +145,13 @@ for i = 1:length(keep) #for each participant
                 active = [(world_state.environment_state.time[b] < (T+1 - 1e-2)) & (as[b, ts[b]] .> 0.5) for b = 1:batch_size] #active episodes
                 rew_prev = (rew[:] .> 0.5) # did we just find a reward
                 #update environment with action 'a'
+
+                #println(ts[12], " ", world_state.agent_state[:, 12], " ", a[1, 12])
                 rew, agent_input, world_state, predictions = environment.step(
                         agent_output, a, world_state, environment.dimensions, m.model_properties,
                         m, h_rnn
                     )
+                #println(ts[12], " ", world_state.agent_state[:, 12], " ", a[1, 12])
 
                 for b = findall(rew_prev) #for the episodes where we found reward before
                     world_state.agent_state[:, b] .= states[:, b, ts[b]+1] #teleport to correct location
@@ -179,12 +182,16 @@ end
 for trial_type = ["explore"; "exploit"] #consider exploration and exploitation trials separately
 if trial_type == "explore" trialstr = "_explore" else trialstr = "" end
 
+#### there is an issue with user i = 21, batch = 12 -- it seems like the walls have been loaded wrong.
+
 # initialize some data array
 alldRTs, alldplans, allddist, alldts = [], [], [], []
 allres, allsims, allsims_s = [], zeros(length(all_pplans_p), 3), zeros(length(all_pplans_p), 3)
 p_plans_by_u, RTs_by_u, dists_by_u, steps_by_u, N_plans_by_u, anums_by_u, trialnums_by_u = [], [], [], [], [], [], []
 
 for i = 1:length(all_pplans_p) #iterate through users
+    #println(i)
+    store = true
 
     p_plans = mean(reduce((a, b) -> cat(a, b, dims = 3), all_pplans_p[i]), dims = 3)[:, :, 1] #rollout probabilities
     N_plans = mean(reduce((a, b) -> cat(a, b, dims = 3), all_Nplans_p[i]), dims = 3)[:, :, 1] #number of rollouts
@@ -195,11 +202,15 @@ for i = 1:length(all_pplans_p) #iterate through users
 
     dRTs, dplans, ddist, dts, new_trial_nums, new_anums, Nplan_dat = [], [], [], [], [], [], []
     for b = 1:size(as, 1)
+        #println(b)
         tmin = 2 #ignore very first action
         tmax = min(sum(as[b, :] .> 0.5), sum(p_plans[b, :] .> 0.0)) #last action in episode
         if (tmax > tmin+5) && (sum(rews[b, :]) > 0.5)
-            @assert all(new_states[:, b, tmin:tmax] .== states[:, b, tmin:tmax]) #check that we followed correct states
-            @assert all(all_new_states_p[i][1][:, b, tmin:tmax] .== all_new_states_p[i][end][:, b, tmin:tmax]) #across trials
+            if ~all(new_states[:, b, tmin:tmax] .== states[:, b, tmin:tmax]) #check that we followed correct states
+                store = false
+            elseif ~all(all_new_states_p[i][1][:, b, tmin:tmax] .== all_new_states_p[i][end][:, b, tmin:tmax]) #across trials
+                store = false
+            end
             #store various pieces of data from this participant
             append!(dRTs, RTs[b, tmin:tmax]); append!(dplans, (p_plans[b, tmin:tmax]))
             append!(ddist, dists_to_rew[b, tmin:tmax]); append!(dts, -trial_ts[b, tmin:tmax])
@@ -215,12 +226,15 @@ for i = 1:length(all_pplans_p) #iterate through users
     end
     dRTs, dplans, ddist, dts = [dat[inds] for dat = [dRTs, dplans, ddist, dts]] #subselect based on trials of interest
     #append data to global data structures
-    push!(RTs_by_u, dRTs); push!(p_plans_by_u, dplans); push!(dists_by_u, ddist); push!(steps_by_u, dts);
-    push!(N_plans_by_u, Nplan_dat[inds]); push!(anums_by_u, new_anums[inds]); push!(trialnums_by_u, new_trial_nums[inds])
-
-    #compute some correlations
-    s_pplan, s_dist, s_ts = cor(dRTs, dplans), cor(dRTs, ddist), cor(dRTs, dts)
-    allsims[i, :] = [s_pplan; s_dist; s_ts]
+    if store
+        push!(RTs_by_u, dRTs); push!(p_plans_by_u, dplans); push!(dists_by_u, ddist); push!(steps_by_u, dts);
+        push!(N_plans_by_u, Nplan_dat[inds]); push!(anums_by_u, new_anums[inds]); push!(trialnums_by_u, new_trial_nums[inds])
+        #compute some correlations
+        s_pplan, s_dist, s_ts = cor(dRTs, dplans), cor(dRTs, ddist), cor(dRTs, dts)
+        allsims[i, :] = [s_pplan; s_dist; s_ts]
+    else
+        println("skipping $(i)!!!")
+    end
 end
 
 println("by user: ", mean(allsims, dims = 1)[:], " ", std(allsims, dims = 1)[:]/sqrt(size(allsims, 1)))

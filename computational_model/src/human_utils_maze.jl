@@ -86,7 +86,7 @@ function extract_maze_data(db, user_id, Larena; T=100, max_RT=5000, game_type = 
 
         for i in reverse(1:Tb) #steps are stored in reverse order
             t = steps[i, "step"]
-            if t > 0.5 #last action of previous episode can carry over
+            if (t > 0.5) && (i < Tb-0.5 || steps[i, "action_time"] < 20000) #last action of previous episode can carry over
                 times[b, t] = steps[i, "action_time"]
                 rews[b, t] = Int(steps[i, "outcome"] == "[\"Hit_reward\"]")
                 as[b, t] = adict[steps[i, "action_type"]]

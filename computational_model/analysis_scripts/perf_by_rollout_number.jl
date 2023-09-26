@@ -16,15 +16,15 @@ end
 analyses the performance (in terms of steps to goal) on trial 2
 as a function of the number of enforced rollouts.
 """
-function run_perf_by_rollout_number(;seeds, N, Lplan, epoch, prefix = "")
+function run_perf_by_rollout_number(;seeds, N, Lplan, epoch, prefix = "", model_prefix = "")
 println("quantifying trial 2 performance by number of rollouts")
 
 res_dict = Dict() #dictionary to store results
 
 for seed = seeds #iterate through random seeds
-println("\n new seed $(seed)!")
 res_dict[seed] = Dict() #results for this seed
-filename = "N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
+filename = "$(model_prefix)N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
+println("\nloading $filename")
 network, opt, store, hps, policy, prediction = recover_model(loaddir*filename) #load model parameters
 
 Larena = hps["Larena"] #size of the arena

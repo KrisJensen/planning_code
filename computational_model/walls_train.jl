@@ -79,7 +79,7 @@ function main()
     args = parse_commandline()
     println(args)
 
-    #extract command line arguments
+    # extract command line arguments
     Larena = args["Larena"]
     Lplan = args["Lplan"]
     Nhidden = args["Nhidden"]
@@ -99,17 +99,17 @@ function main()
     Random.seed!(seed) #set random seed
 
     loss_hp = LossHyperparameters(;
-        #predictive loss weight
+        # predictive loss weight
         βp=βp,
-        #value function loss weight
+        # value function loss weight
         βv=0.05f0,
-        #entropy loss cost
+        # entropy loss cost
         βe=0.05f0,
-        #reward loss cost
+        # reward loss cost
         βr=1.0f0,
     )
 
-    #build RL environment
+    # build RL environment
     model_properties, wall_environment, model_eval = build_environment(
         Larena, Nhidden, T; Lplan, constant_rollout_time
     )
@@ -207,7 +207,7 @@ function main()
     end
 
     Flux.reset!(m) #reset model state
-    #save model
+    # save model
     filename = "$save_dir/results/" * mod_name
     store = [rews, preds]
     return save_model(m, store, opt, filename, wall_environment, loss_hp; Lplan)

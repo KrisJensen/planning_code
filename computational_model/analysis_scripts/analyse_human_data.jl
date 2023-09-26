@@ -2,10 +2,13 @@
 
 # load scripts and model
 include("anal_utils.jl")
+include("euclidean_prolific_ids.jl")
 using ToPlanOrNotToPlan
 using SQLite, DataFrames, ImageFiltering
+using NaNStatistics
 
 println("loading and processing human behavioural data")
+wraparound = false
 
 #perform analyses for both non-guided ("play") and guided ("follow") episodes
 for game_type = ["play"; "follow"]
@@ -18,9 +21,16 @@ environment_dimensions = EnvironmentDimensions(Larena^2, 2, 5, T, Larena)
 #initialize some arrays for storing data
 all_RTs, all_trial_nums, all_trial_time, all_rews, all_states = [], [], [], [], []
 all_wall_loc, all_ps, all_as = [], [], []
-Nepisodes = []
+Nepisodes, tokens = [], []
 
-db = SQLite.DB("../../human_data/prolific_data.sqlite")
+if wraparound
+    db = SQLite.DB("../../human_data/prolific_data.sqlite")
+    wrapstr = ""
+else
+    db = SQLite.DB("../../human_data/Euclidean_prolific_data.sqlite")
+    wrapstr = "_euclidean"
+end
+
 users = (DBInterface.execute(db, "SELECT id FROM users") |> DataFrame)[:, "id"]
 if game_type == "play" nskip = 2 else nskip = 8 end #number of initial episodes to discard
 
@@ -30,9 +40,12 @@ for user_id = users
     user_eps = DBInterface.execute(db, "SELECT * FROM episodes WHERE user_id = "*string(user_id[1])) |> DataFrame #episode data
     usize = size(user_eps, 1) #total number of episodes for this user
     info = DBInterface.execute(db, "SELECT * FROM users WHERE id = "*string(user_id)) |> DataFrame
-    if (usize >= 58) && (length(info[1, "token"]) == 24) #finished task and prolific-sized token
+    token = info[1, "token"]
+    if (usize >= 58) && (length(token) == 24) #finished task and prolific-sized token
+        if wraparound || (token in euclidean_ids)
         i_user += 1; if i_user % 10 == 0 println(i_user) end
         rews, as, states, wall_loc, ps, times, trial_nums, trial_time, RTs, shot = extract_maze_data(db, user_id, Larena, game_type = game_type, skip_init = nskip)
+        println(i_user, " ", user_id, " ", size(RTs), " ", nansum(RTs)/size(RTs, 1)/1e3)
         append!(all_RTs, [RTs]) #reaction times
         append!(all_rews, [rews]) #rewards
         append!(all_trial_nums, [trial_nums]) #trial numbes
@@ -42,6 +55,8 @@ for user_id = users
         append!(all_ps, [ps]) #reward locations
         append!(all_as, [as]) #actions taken
         append!(Nepisodes, size(ps, 2)) #number of episodes for this user
+        push!(tokens, info[1, "token"])
+        end
     end
 end
 valid_users = 1:length(all_rews)
@@ -50,11 +65,11 @@ println("processing data for $(length(valid_users)) users")
 
 #store all data
 data = [all_states, all_ps, all_as, all_wall_loc, all_rews, all_RTs, all_trial_nums, all_trial_time]
-@save "$(datadir)/human_all_data_$game_type.bson" data
+@save "$(datadir)/human_all_data_$game_type$wrapstr.bson" data
 
 #store some generally useful data
 data = Dict("all_rews" => all_rews, "all_RTs" => all_RTs)
-@save "$(datadir)/human_RT_and_rews_$game_type.bson" data
+@save "$(datadir)/human_RT_and_rews_$game_type$wrapstr.bson" data
 
 # compute steps by trial number
 function comp_rew_by_step(rews; Rmin = 4)
@@ -83,7 +98,7 @@ ss = reduce(hcat, ss)
 
 #save data
 data = [Rmin, μs, ss]
-@save "$(datadir)/human_by_trial_$game_type.bson" data
+@save "$(datadir)/human_by_trial_$game_type$wrapstr.bson" data
 
 # RT by distance step and distance to goal
 function human_RT_by_difficulty(T, rews, ps, wall_loc, Larena, trial_nums, trial_time, RTs, states)
@@ -114,7 +129,7 @@ end
 
 #write result to a file
 data = [RTs, dists, all_trial_nums, all_trial_time]
-@save "$(datadir)RT_by_complexity_by_user_$game_type.bson" data
+@save "$(datadir)RT_by_complexity_by_user_$game_type$wrapstr.bson" data
 
 # compute RT by unique states visited during exploration
 all_unique_states = []
@@ -138,7 +153,7 @@ end
 
 #write data to file
 data = [all_RTs, all_unique_states]
-@save "$(datadir)unique_states_$game_type.bson" data
+@save "$(datadir)unique_states_$game_type$wrapstr.bson" data
 
 end
 

@@ -2,10 +2,13 @@
 include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
+wrapstr = ""
+wrapstr = "_euclidean"
+
 println("computing prior parameters for human response times")
 
 #start by loading our processed human data for the guided ('follow') trials
-@load "$(datadir)/human_all_data_follow.bson" data
+@load "$(datadir)/human_all_data_follow$wrapstr.bson" data
 _, _, _, _, _, all_RTs_f, all_trial_nums_f, all_trial_time_f = data;
 Nuser = length(all_RTs_f) #number of users
 
@@ -40,5 +43,5 @@ for (i_init, initial) = enumerate([true, false]) #are we considering the first a
 end
 
 #write to file
-@save "$datadir/guided_lognormal_params_delta.bson" params #mu, sigma, delta
+@save "$datadir/guided_lognormal_params_delta$wrapstr.bson" params #mu, sigma, delta
 
