@@ -29,9 +29,9 @@ for wrapstr = ["", "_euclidean"]
     push!(rews, [nansum(rew)/size(rew, 1) for rew = all_rews_p][keep])
 
     all_TTs = []
-    for u = 1:length(initial_delays)
+    for u = keep
         new_TTs = []
-        rts, tnums = all_RTs_p[keep[u]], all_trial_nums_p[keep[u]]
+        rts, tnums = all_RTs_p[u], all_trial_nums_p[u]
         initial, later = params["initial"][u, :], params["later"][u, :]
         initial_post_mean(r) = calc_post_mean(r, muhat=initial[1], sighat=initial[2], deltahat=initial[3], mode = false)
         later_post_mean(r) = calc_post_mean(r, muhat=later[1], sighat=later[2], deltahat=later[3], mode = false)

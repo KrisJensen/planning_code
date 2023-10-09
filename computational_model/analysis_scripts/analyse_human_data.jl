@@ -8,7 +8,7 @@ using SQLite, DataFrames, ImageFiltering
 using NaNStatistics
 
 println("loading and processing human behavioural data")
-wraparound = false
+wraparound = true
 
 #perform analyses for both non-guided ("play") and guided ("follow") episodes
 for game_type = ["play"; "follow"]
