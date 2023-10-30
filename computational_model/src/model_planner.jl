@@ -117,7 +117,8 @@ function model_planner(world_state,
     times = world_state.environment_state.time
 
     plan_inds = findall(Bool.(ahot[5, :]) .& (.~at_rew)) #everywhere we stand still not at the reward
-    rpred = agent_output[(Naction + Nstates + 2):(Naction + Nstates + 1 + Nstates), :]
+    #rpred = agent_output[(Naction + Nstates + 2):(Naction + Nstates + 1 + Nstates), :]
+    rpred = agent_output[(Naction + Nstates + 3):(Naction + Nstates + 2 + Nstates), :]
     goal = [argmax(rpred[:, b]) for b = 1:batch] #index of ML goal location
 
     ### agent-driven planning ###

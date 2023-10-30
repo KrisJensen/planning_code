@@ -6,7 +6,9 @@ using MultivariateStats
 fig = figure(figsize = (17*cm, 3.0*cm))
 
 # load data
-@load "$(datadir)planning_as_pg.bson" res_dict
+#@load "$(datadir)planning_as_pg.bson" res_dict
+@load "$(datadir)planning_as_pg_new.bson" res_dict; println("using new!!")
+#@load "$(datadir)planning_as_pg_exp.bson" res_dict; println("using exp!!")
 seeds = sort([k for k = keys(res_dict)])
 
 # PCA plot of mean hidden state updates
@@ -55,7 +57,11 @@ for (ij, jkey) = enumerate(["jacs"; "jacs_shift"; "jacs_shift2"])
         jacs, gs, gs2 = [copy(res_dict[seed][k]) for k = [jkey, "sim_gs", "sim_gs2"]] # alpha_RNN, alpha_PG1, alpha_PG2
         inds, inds2 = 1:length(sim_as), findall(.~isnan.(sim_a2s)) # actions to consider (min rollout length of 2 for alpha_PG2)
         betas = reduce(vcat,[gs[i:i,:,Int(sim_as[i])] for i=inds]) # alpha_PG1
-        betas2 = reduce(vcat,[gs2[i:i,:,Int(sim_as[i])] for i=inds2]) # alpha_PG2
+        betas2 = reduce(vcat,[gs2[i:i,:,Int(sim_a2s[i])] for i=inds2]) # alpha_PG2
+
+        #pis = res_dict[seed]["all_pis"][:, [CartesianIndex()], :] # inser middle dimension
+        #betasexp = sum(gs .* pis, dims = 3)[:, :, 1] # E_a\sim(pi) [alpha_PG1] (this is zero)
+
         jacs, betas, betas2 = [arr .- mean(arr, dims = 1) for arr = [jacs, betas, betas2]] # mean-subtract
         jacs, betas, betas2 = [arr ./ sqrt.(sum(arr.^2, dims = 2)) for arr = [jacs, betas, betas2]] # normalize
         # compute angles in PC space
@@ -85,7 +91,7 @@ for (ires, res) = enumerate([meanspca, meanspca2]) # first action and seconnd ac
     ax.axhline(0, color = col_c, lw = 2) # baseline
     if ires == 1 # set some plotting parameters
         vmin, vmax = minimum(mus-ss), maximum(mus+ss)
-        global limy = [vmin - 0.05*(vmax-vmin); vmax+0.05*(vmax-vmin)]
+        global limy = [vmin - 0.1*(vmax-vmin); vmax+0.1*(vmax-vmin)]
         ax.set_ylabel(L"$\cos \theta$", labelpad = -0.07)
     else
         global limy = limy
@@ -106,10 +112,11 @@ end
 meanrews, pfracs, seeds, Nhiddens, epochs = [res_dict[k] for k = ["meanrews", "planfracs", "seeds", "Nhiddens", "epochs"]]
 
 # only consider second epoch onwards
-mms = mean(meanrews, dims = 2)[:, 1, 3:length(epochs)] # mean reward across seeds
-sms = std(meanrews, dims = 2)[:, 1, 3:length(epochs)] / sqrt(length(seeds)) # standard error
-mps = mean(pfracs, dims = 2)[:, 1, 3:length(epochs)] # mean rollout frequency across seeds
-sps = std(pfracs, dims = 2)[:, 1, 3:length(epochs)] / sqrt(length(seeds)) # standard error
+i1 = 2
+mms = mean(meanrews, dims = 2)[:, 1, i1:length(epochs)] # mean reward across seeds
+sms = std(meanrews, dims = 2)[:, 1, i1:length(epochs)] / sqrt(length(seeds)) # standard error
+mps = mean(pfracs, dims = 2)[:, 1, i1:length(epochs)] # mean rollout frequency across seeds
+sps = std(pfracs, dims = 2)[:, 1, i1:length(epochs)] / sqrt(length(seeds)) # standard error
 
 # plot the data
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.87, right=1.0, bottom = 0, top = 1.0, wspace=0.15)

@@ -98,7 +98,7 @@ ax = fig.add_subplot(grids[1,1])
 for i = 1:2
     ax.scatter(RTs_play[i], rews[i], color = ["k", col_c][i], marker = ".", s = 60)
 end
-ax.legend(["wrap"; "no-wrap"], loc = (0.4, 0.65), handletextpad=0.4, borderaxespad = 0.3, handlelength = 1.0)
+ax.legend(["wrap"; "no-wrap"], loc = (0.4, 0.65), handletextpad=0.4, borderaxespad = 0.3, handlelength = 1.0, fontsize = fsize_leg)
 ax.set_xlabel("mean RT (ms)")
 ax.set_ylabel("mean reward")
 ax.set_yticks(4:2:16)

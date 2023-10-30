@@ -56,9 +56,9 @@ means = [nanmean(RTs) for RTs = data_follow["all_RTs"]]
 keep = findall(means .< 690) # non-outlier users
 Nkeep = length(keep)
 
-@load "$(datadir)/human_all_data_play$wrapstr.bson" data;
+@load "$(datadir)/human_all_data_play.bson" data;
 _, _, _, _, all_rews_p, all_RTs_p, all_trial_nums_p, _ = data;
-@load "$datadir/guided_lognormal_params_delta$wrapstr.bson" params # parameters of prior distributions
+@load "$datadir/guided_lognormal_params_delta.bson" params # parameters of prior distributions
 all_TTs, all_DTs = [], []
 for u = keep
     rts, tnums = all_RTs_p[u], all_trial_nums_p[u]
@@ -106,23 +106,22 @@ end
 grids = fig.add_gridspec(nrows=1, ncols=1, left=0.00, right=0.175, bottom = 0.63, top = 1.0, wspace=0.45, hspace=0.60)
 
 dat = rews_by_episode
-m = mean(dat, dims = 2)[:] # mean
-s = std(dat, dims = 2)[:] / sqrt(size(dat, 2)) #standard error
-xs = 1:length(m)
+mr = mean(dat, dims = 2)[:] # mean
+sr = std(dat, dims = 2)[:] / sqrt(size(dat, 2)) #standard error
+xs = 1:length(mr)
 ax = fig.add_subplot(grids[1,1]) # new subplot
-permtest(m, "reward")
+permtest(mr, "reward")
 cvals = [cor(xs, dat[:, i]) for i = 1:size(dat, 2)]
 println("reward mean & sem across people: $(mean(cvals)) & $(std(cvals)/sqrt(length(cvals)))")
 
-ax.plot(xs, m, ls = "-", color = col_h)
-ax.fill_between(xs, m-s, m+s, color = col_h, alpha = 0.2)
+ax.plot(xs, mr, ls = "-", color = col_h)
+ax.fill_between(xs, mr-sr, mr+sr, color = col_h, alpha = 0.2)
 # set some axis labels etc.
 ax.set_xlabel("episode")
 ax.set_ylabel("mean reward")
 ax.set_ylim(6.5, 9.5)
 ax.set_xticks(0:12:38)
 ax.set_xlim(0,38)
-
 
 ## now plot RTs
 grids = fig.add_gridspec(nrows=1, ncols=3, left=0.330, right=1.00, bottom = 0.63, top = 1.0, wspace=0.48, hspace=0.60)
@@ -168,3 +167,21 @@ plt.text(x2,y2,"D";ha="left",va="top",transform=fig.transFigure,fontweight="bold
 savefig("./figs/supp_fig_by_size.pdf", bbox_inches = "tight")
 savefig("./figs/supp_fig_by_size.png", bbox_inches = "tight")
 close()
+
+
+
+### print avg rew and RT for first/last 5 episodes ###
+
+mr1, mr2 = (mean(mr[1:5])), (mean(mr[34:38]))
+println("mean first five rew: $mr1")
+println("mean last five rew: $mr2")
+
+mt = mean(RTs_by_episode, dims = 2)[:] # mean
+mt1, mt2 = (mean(mt[1:5])), (mean(mt[34:38]))
+println("mean first five RT: $mt1")
+println("mean last five RT: $mt2")
+
+println("scale up: ", mr1*mt1/mt2)
+
+println("rel time: ", abs(mt2-mt1)/mt1*100)
+println("rel rew: ", abs(mr2-mr1)/mr1*100)

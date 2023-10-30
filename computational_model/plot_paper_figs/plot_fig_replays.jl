@@ -137,12 +137,15 @@ if plot_experimental_replays
     all_succsc = [reduce(vcat, succsc) for succsc in all_succsc]
     follow = Float64.(all_next_as .== all_sim_as) # did we physically follow the replayed action?
 
+    disjoint_ctrl = true
     for ictrl = [0, 1] # whether to consider home (0) or away (1) trials
         dats = zeros(length(rnames), 2) # initialize data array
         for n = 1:length(rnames) # for each session
             inds_s = findall((all_succs .== 1) .& ((all_trialnums .% 2) .== ictrl) .& (all_ns .== n)) #indices of successful replays
-            # only consider unsuccessful replays that were successful to some location to try to match statistics a bit
-            inds_n = [findall((succsc .== 1) .& ((all_trialnums .% 2) .== ictrl) .& (all_ns .== n)) for succsc = all_succsc]
+            if disjoint_ctrl
+                # only consider unsuccessful replays that were successful to some location to try to match statistics a bit
+                inds_n = [findall((succsc .== 1) .& ((all_trialnums .% 2) .== ictrl) .& (all_ns .== n)) for succsc = all_succsc]
+            end
             inds_n = reduce(vcat, [setdiff(inds, inds_s) for inds = inds_n])
             dats[n, :] = [mean(follow[inds_s]) mean(follow[inds_n])] # follow frequency for successful and unsuccessful replays
         end

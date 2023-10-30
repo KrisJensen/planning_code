@@ -41,7 +41,7 @@ Nin_base = Naction + 1 + 1 + Nstates + 2 * Nstates #'physical' input dimensions
 Nhidden = m.model_properties.Nhidden
 tmax = 50
 Lplan = model_properties.Lplan
-nreps = 1000 #number of random environments to consider
+nreps = 5000 #number of random environments to consider
 nplans = 0:15 #number of plans enforced
 dts = zeros(2, nreps, length(nplans)) .+ NaN; #time to goal
 policies = zeros(2, nreps, length(nplans), 10, 5) .+ NaN; #store policies
@@ -51,13 +51,14 @@ for ictrl = [1;2] #plan input or not (zerod out)
     for nrep = 1:nreps #for each repetition
         if nrep % 100 == 0 println(nrep) end
         for (iplan, nplan) = enumerate(nplans) #for each number of rollouts enforced
+            #println(nrep, " ", nplan)
             Random.seed!(nrep) #set random seed for consistent environment across #rollouts
             world_state, agent_input = wall_environment.initialize(
                 zeros(2), zeros(2), batch, m.model_properties
             ) #initialize environment
             agent_state = world_state.agent_state #initialize agent location
             h_rnn = m.network[GRUind].cell.state0 .+ Float32.(zeros(Nhidden, batch)) #expand hidden state
-            exploit = Bool.(zeros(batch)) #keep track of exploration bs exploitation
+            exploit = Bool.(zeros(batch)) #keep track of exploration vs exploitation
             rew = zeros(batch) #keep track of reward
             if iplan == 1
                 ps, ws = world_state.environment_state.reward_location, world_state.environment_state.wall_loc
@@ -71,7 +72,7 @@ for ictrl = [1;2] #plan input or not (zerod out)
             while ~finished #until finished
                 t += 1 #update iteration number
                 agent_input, world_state, rew = agent_input, world_state, rew
-                if ictrl == 2 agent_input[Nin_base+1:end, :] .= 0 end #no planning input if ctrl
+                if (ictrl == 2 && exploit[1]) agent_input[Nin_base+1:end, :] .= 0 end #no planning input if ctrl
                 h_rnn, agent_output, a = m.forward(m, ed, agent_input, h_rnn) #RNN step
 
                 plan = false #have we just performed a rollout
@@ -102,6 +103,8 @@ for ictrl = [1;2] #plan input or not (zerod out)
                     if exploit[1] #already found reward before
                         finished = true #now finished since we only consider trial 2
                         dts[ictrl, nrep, iplan] = t - t1 - 1 - nplan #store the number of actions to goal
+                        @assert nact == (t - t1 - 1 - nplan)
+                        @assert nact >= mindists[nrep, iplan]
                     else #first time
                         global t1 = t #reset timer at the end of first trial
                     end
