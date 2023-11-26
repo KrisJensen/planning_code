@@ -124,7 +124,7 @@ ax.set_xticks(0:12:38)
 ax.set_xlim(0,38)
 
 ## now plot RTs
-grids = fig.add_gridspec(nrows=1, ncols=3, left=0.330, right=1.00, bottom = 0.63, top = 1.0, wspace=0.48, hspace=0.60)
+grids = fig.add_gridspec(nrows=1, ncols=3, left=0.330, right=1.00, bottom = 0.63, top = 1.0, wspace=0.55, hspace=0.60)
 
 labels = ["response"; "thinking"; "delay"]
 lss = ["-", "-", "-"]
