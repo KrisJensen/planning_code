@@ -57,7 +57,7 @@ for ictrl = [1;2] #plan input or not (zerod out)
             ) #initialize environment
             agent_state = world_state.agent_state #initialize agent location
             h_rnn = m.network[GRUind].cell.state0 .+ Float32.(zeros(Nhidden, batch)) #expand hidden state
-            exploit = Bool.(zeros(batch)) #keep track of exploration bs exploitation
+            exploit = Bool.(zeros(batch)) #keep track of exploration vs exploitation
             rew = zeros(batch) #keep track of reward
             if iplan == 1
                 ps, ws = world_state.environment_state.reward_location, world_state.environment_state.wall_loc
@@ -71,7 +71,7 @@ for ictrl = [1;2] #plan input or not (zerod out)
             while ~finished #until finished
                 t += 1 #update iteration number
                 agent_input, world_state, rew = agent_input, world_state, rew
-                if ictrl == 2 agent_input[Nin_base+1:end, :] .= 0 end #no planning input if ctrl
+                if (ictrl == 2 && exploit[1]) agent_input[Nin_base+1:end, :] .= 0 end #no planning input if ctrl
                 h_rnn, agent_output, a = m.forward(m, ed, agent_input, h_rnn) #RNN step
 
                 plan = false #have we just performed a rollout

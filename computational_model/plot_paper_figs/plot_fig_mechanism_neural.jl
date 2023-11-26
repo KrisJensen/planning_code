@@ -55,7 +55,7 @@ for (ij, jkey) = enumerate(["jacs"; "jacs_shift"; "jacs_shift2"])
         jacs, gs, gs2 = [copy(res_dict[seed][k]) for k = [jkey, "sim_gs", "sim_gs2"]] # alpha_RNN, alpha_PG1, alpha_PG2
         inds, inds2 = 1:length(sim_as), findall(.~isnan.(sim_a2s)) # actions to consider (min rollout length of 2 for alpha_PG2)
         betas = reduce(vcat,[gs[i:i,:,Int(sim_as[i])] for i=inds]) # alpha_PG1
-        betas2 = reduce(vcat,[gs2[i:i,:,Int(sim_as[i])] for i=inds2]) # alpha_PG2
+        betas2 = reduce(vcat,[gs2[i:i,:,Int(sim_a2s[i])] for i=inds2]) # alpha_PG2
         jacs, betas, betas2 = [arr .- mean(arr, dims = 1) for arr = [jacs, betas, betas2]] # mean-subtract
         jacs, betas, betas2 = [arr ./ sqrt.(sum(arr.^2, dims = 2)) for arr = [jacs, betas, betas2]] # normalize
         # compute angles in PC space
