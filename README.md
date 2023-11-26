@@ -2,9 +2,9 @@
 
 In this repository, we provide code for the modeling and analyses in Jensen et al. (2023): "A recurrent network model of planning explains hippocampal replay and human behavior" (https://www.biorxiv.org/content/10.1101/2023.01.16.523429v2).
 
-Human data for the behavioural experiments both with and without periodic boundaries can be found in the `human_data` directory.
+Human data for the behavioural experiments both with and without periodic boundaries can be found in the `human_data/` directory.
 
-Code for training and analysing the reinforcement learning models, as well as generating the figures in the paper, can be found in the `computational_model` directory.
+Code for training and analysing the reinforcement learning models, as well as generating the figures in the paper, can be found in the `computational_model/` directory.
 
 To run the code, julia >= 1.7 should be installed together with all the packages from the Manifest.toml file.
 To install these packages:\
