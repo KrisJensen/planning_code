@@ -49,9 +49,8 @@ mindists = zeros(nreps, length(nplans));
 
 for ictrl = [1;2] #plan input or not (zerod out)
     for nrep = 1:nreps #for each repetition
-        if nrep % 100 == 0 println(nrep) end
+        if nrep % 1000 == 0 println(nrep) end
         for (iplan, nplan) = enumerate(nplans) #for each number of rollouts enforced
-            #println(nrep, " ", nplan)
             Random.seed!(nrep) #set random seed for consistent environment across #rollouts
             world_state, agent_input = wall_environment.initialize(
                 zeros(2), zeros(2), batch, m.model_properties
