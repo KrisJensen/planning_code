@@ -20,7 +20,7 @@ for seed = seeds
     Random.seed!(1) #set a seed for reproducibility
 
     filename = "N100_T50_Lplan8_seed$(seed)_$epoch" #model to load
-    println("running $filename")
+    println("\nrunning $filename")
     network, opt, store, hps, policy, prediction = recover_model(loaddir*filename) #load model parameters
     Larena = hps["Larena"]
 
@@ -37,7 +37,6 @@ for seed = seeds
     ) #let the agent act in the environments (parallelized)
 
     #print a brief summary
-    println("\n", seed)
     println(sum(rews .> 0.5) / batch_size, " ", time() - tic)
     println("planning fraction: ", sum(as .> 4.5) / sum(as .> 0.5))
 

@@ -21,7 +21,7 @@ include("estimate_num_mazes.jl")
 include("compare_maze_path_lengths.jl")
 #include("analyse_hp_sweep.jl") [need to re-train models or include pretrained models]
 include("eval_value_function.jl")
-include("quantify_internal_model.jl")
+#include("quantify_internal_model.jl") [need to re-train models or include full training run in pretrained models]
 #include("analyse_variable_rollouts.jl") [need to re-train models or include pretrained models]
 
 println("\nFinished after ", (time()-tic)/60/60, " hours.")

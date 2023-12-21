@@ -50,7 +50,7 @@ ax = fig.add_subplot(grids[1,1])
 ax.plot(nplans,m1, ls = "-", color = col_p, label = "agent") #mean
 ax.fill_between(nplans,m1-s1,m1+s1, color = col_p, alpha = 0.2) #standard error
 plot([nplans[1]; nplans[end]], ones(2)*mean(bs), color = col_c, ls = "-", label = "optimal") #optimal baseline
-ax.plot(nplans,m2, ls = "--", color = col_c, label = "ctrl") #mean
+ax.plot(nplans,m2, ls = ":", color = col_c, label = "ctrl") #mean
 ax.fill_between(nplans,m2-s2,m2+s2, color = col_c, alpha = 0.2) #standard error
 legend(frameon = false, loc = "upper right", fontsize = fsize_leg, handlelength=1.5, handletextpad=0.5, borderpad = 0.0, labelspacing = 0.05)
 xlabel("# rollouts")
