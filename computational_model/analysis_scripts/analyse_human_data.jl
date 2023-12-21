@@ -45,7 +45,6 @@ for user_id = users
         if wraparound || (token in euclidean_ids)
         i_user += 1; if i_user % 10 == 0 println(i_user) end
         rews, as, states, wall_loc, ps, times, trial_nums, trial_time, RTs, shot = extract_maze_data(db, user_id, Larena, game_type = game_type, skip_init = nskip)
-        println(i_user, " ", user_id, " ", size(RTs), " ", nansum(RTs)/size(RTs, 1)/1e3)
         append!(all_RTs, [RTs]) #reaction times
         append!(all_rews, [rews]) #rewards
         append!(all_trial_nums, [trial_nums]) #trial numbes
