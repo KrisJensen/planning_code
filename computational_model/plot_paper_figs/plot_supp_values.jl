@@ -1,16 +1,19 @@
+#This script plots Figure S6 of Jensen et al.
+
 include("plot_utils.jl") #various global settings
 
+# load data
 @load "$datadir/value_function_eval.bson" data
 
-as = [data[seed]["as"] for seed = seeds]
-Vs = [data[seeds[i]]["Vs"][as[i] .> 0.5] for i = 1:length(seeds)]
-rtg = [data[seeds[i]]["rew_to_go"][as[i] .> 0.5] for i = 1:length(seeds)]
-ts = [data[seeds[i]]["ts"][as[i] .> 0.5]/51*20 for i = 1:length(seeds)]
+as = [data[seed]["as"] for seed = seeds] # actions
+Vs = [data[seeds[i]]["Vs"][as[i] .> 0.5] for i = 1:length(seeds)] # values
+rtg = [data[seeds[i]]["rew_to_go"][as[i] .> 0.5] for i = 1:length(seeds)] # reward to go
+ts = [data[seeds[i]]["ts"][as[i] .> 0.5]/51*20 for i = 1:length(seeds)] # time within episode
 accs = [Vs[i] - rtg[i] for i = 1:length(seeds)]
-all_accs = reduce(vcat, accs)
-all_rtg = reduce(vcat, rtg)
+all_accs = reduce(vcat, accs) # combine across agents
+all_rtg = reduce(vcat, rtg) # combine across agents
 
-all_last_as = []
+all_last_as = [] # last actions
 for a = as
     last_inds = sum(a .> 0.5, dims = 2)[:]
     push!(all_last_as, reduce(hcat, [a[i, last_inds[i]-9:last_inds[i]] for i = 1:size(a, 1)])')
@@ -46,9 +49,9 @@ axs[2].set_xlabel("time within episode (s)")
 axs[2].set_ylabel("prediction error")
 
 
-###
+### separate data by rollouts sequence length
 
-plan_lengths = 1:5
+plan_lengths = 1:5 # lengths to consider
 plan_nums = 0:plan_lengths[end]
 keys = ["tot_plans", "plan_nums", "suc_rolls", "num_suc_rolls", "Vs", "rew_to_go"]
 all_accs, all_vals, all_vals0, all_accs0 = [zeros(length(seeds), length(plan_lengths), length(plan_nums)) for _ = 1:4]
@@ -64,7 +67,7 @@ for (iseed, seed) = enumerate(seeds)
             vals = Vs[inds]
             vals0 = Vs[inds0]
             rtg = rew_to_go[inds]
-            #println(plan_length, " ", number, " ", length(accs), " ", mean(accs), " ", std(accs)/sqrt(length(accs)), " ", mean(vals))
+            # store result of this rollout
             all_accs[iseed, ilength, inum] = mean(accs)
             all_accs0[iseed, ilength, inum] = mean(accs0)
             all_vals[iseed, ilength, inum] = mean(vals)
@@ -73,13 +76,13 @@ for (iseed, seed) = enumerate(seeds)
     end
 end
 
-##
+## plot
 
 cols = [[0.00; 0.09; 0.32], [0.00;0.19;0.52], [0.19;0.39;0.72], [0.34;0.54;0.87], [0.49;0.69;1.0]]
 grids = fig.add_gridspec(nrows=1, ncols=4, left=0.0, right=1, bottom = 0.0, top = 0.35, wspace=0.6)
 axs = [fig.add_subplot(grids[1,i]) for i = 1:4]
 for (ilength, plan_length) = enumerate(plan_lengths)
-    for (idat, dat) = enumerate([all_vals, all_vals0, all_accs, all_accs0])
+    for (idat, dat) = enumerate([all_vals, all_vals0, all_accs, all_accs0]) # for each data type to plot
         m = mean(dat[:, ilength, :], dims = 1)[1:plan_length+1]
         s = std(dat[:, ilength, :], dims = 1)[1:plan_length+1]/sqrt(size(dat, 1))
         xs = 0:plan_length

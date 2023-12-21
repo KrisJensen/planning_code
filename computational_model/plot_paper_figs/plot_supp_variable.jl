@@ -1,4 +1,4 @@
-#This script plots Figure 2 of Jensen et al.
+#This script plots Figure S8 of Jensen et al.
 
 include("plot_utils.jl") #various global settings
 using Flux
@@ -122,7 +122,7 @@ for i = 1:2 #rewarded and non-rewarded rollout
     ax.axhline(0.25, color = color = col_c, ls = "-")
 end
 
-
+# add labels and save
 y1, y2 = 1.16, 0.46
 x1, x2, x3 = -0.105, 0.33, 0.675
 plt.text(x1,y1,"A"; ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label, )

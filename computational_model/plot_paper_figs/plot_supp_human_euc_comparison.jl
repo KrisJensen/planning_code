@@ -37,15 +37,13 @@ for wrapstr = ["", "_euclidean"]
         later_post_mean(r) = calc_post_mean(r, muhat=later[1], sighat=later[2], deltahat=later[3], mode = false)
         tnum = 1
         for ep = 1:size(rts, 1)
-            for b = 1:sum(tnums[ep, :] .> 0.5)
-                t, rt = tnums[ep, b], rts[ep, b]
-                if t > 1.5
-                    if t == tnum # same trial
+            for b = 1:sum(tnums[ep, :] .> 0.5) # for each action
+                t, rt = tnums[ep, b], rts[ep, b] # trial number and response time
+                if t > 1.5 # if we're in exploitation
+                    if t == tnum # same trial as before
                         push!(new_TTs, later_post_mean(rt))
-                        #println(t, " ", rt, " same trial ", new_TTs[end])
                     else # first action of new trial
                         push!(new_TTs, initial_post_mean(rt))
-                        #println(t, " ", rt, " new trial ", new_TTs[end])
                     end
                 end
                 tnum = t

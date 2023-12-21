@@ -1,4 +1,4 @@
-#This script plots Figure S1 of Jensen et al.
+#This script plots Figure S2 of Jensen et al.
 
 include("plot_utils.jl")
 using ToPlanOrNotToPlan
@@ -59,14 +59,10 @@ for i = keep # for each user
 end
 RTs = [nanmean(RTs) for RTs = all_RTs[keep]] # corresponding response times
 inds = findall(all_opts .> 0.5)
-#inds = findall(all_opts .> -0.5)
 RTs, all_opts = RTs[inds], Float64.(all_opts[inds])
 
-fcor = cor
-#fcor = corspearman
-
-rcor = fcor(RTs, all_opts) # correlations between response times and optimality
-ctrls = zeros(10000); for i = 1:10000 ctrls[i] = fcor(RTs, all_opts[randperm(length(inds))]) end # permutation test
+rcor = cor(RTs, all_opts) # correlations between response times and optimality
+ctrls = zeros(10000); for i = 1:10000 ctrls[i] = cor(RTs, all_opts[randperm(length(inds))]) end # permutation test
 println(rcor, " ", mean(ctrls .> rcor))
 
 # plot result

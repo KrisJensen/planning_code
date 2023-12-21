@@ -1,4 +1,4 @@
-## This script plots Figure S9 of Jensen et al.
+## This script plots Figure S3 of Jensen et al.
 
 include("plot_utils.jl")
 using NaNStatistics
@@ -60,23 +60,24 @@ Nkeep = length(keep)
 _, _, _, _, all_rews_p, all_RTs_p, all_trial_nums_p, _ = data;
 @load "$datadir/guided_lognormal_params_delta.bson" params # parameters of prior distributions
 all_TTs, all_DTs = [], []
-for u = keep
-    rts, tnums = all_RTs_p[u], all_trial_nums_p[u]
-    new_TTs, new_DTs = [zeros(size(rts)) .+ NaN for _ = 1:2]
+for u = keep # for each participant
+    rts, tnums = all_RTs_p[u], all_trial_nums_p[u] # RTs and trial numbers
+    new_TTs, new_DTs = [zeros(size(rts)) .+ NaN for _ = 1:2] # thinking time and delay times
     initial, later = params["initial"][u, :], params["later"][u, :]
+    # functions for computing posterior means
     initial_post_mean(r) = calc_post_mean(r, muhat=initial[1], sighat=initial[2], deltahat=initial[3], mode = false)
     later_post_mean(r) = calc_post_mean(r, muhat=later[1], sighat=later[2], deltahat=later[3], mode = false)
     tnum = 1
-    for ep = 1:size(rts, 1)
-        for b = 1:sum(tnums[ep, :] .> 0.5)
-            t, rt = tnums[ep, b], rts[ep, b]
+    for ep = 1:size(rts, 1) # for each episode
+        for b = 1:sum(tnums[ep, :] .> 0.5) # for each action
+            t, rt = tnums[ep, b], rts[ep, b] # trial number and response time
             if b > 1.5 # discard very first action
-                if t == tnum # same trial
+                if t == tnum # same trial as before
                     new_TTs[ep, b] = later_post_mean(rt) 
                 else # first action of new trial
                     new_TTs[ep, b] = initial_post_mean(rt)
                 end
-                new_DTs[ep, b] = rt - new_TTs[ep, b]
+                new_DTs[ep, b] = rt - new_TTs[ep, b] # delays is response time minus thinking time
             end
             tnum = t
         end
@@ -84,10 +85,11 @@ for u = keep
     push!(all_TTs, Float64.(new_TTs))
     push!(all_DTs, Float64.(new_DTs))
 end
+# store data
 all_RTs = [all_TTs[i] + all_DTs[i] for i = 1:length(all_TTs)]
 
 ##
-
+# combine data
 rews_by_episode = reduce(hcat, [nansum(rews, dims = 2) for rews = all_rews_p])
 RTs_by_episode = reduce(hcat, [nanmedian(RTs, dims = 2) for RTs = all_RTs])
 TTs_by_episode = reduce(hcat, [nanmedian(TTs, dims = 2) for TTs = all_TTs])
@@ -167,7 +169,6 @@ plt.text(x2,y2,"D";ha="left",va="top",transform=fig.transFigure,fontweight="bold
 savefig("./figs/supp_fig_by_size.pdf", bbox_inches = "tight")
 savefig("./figs/supp_fig_by_size.png", bbox_inches = "tight")
 close()
-
 
 
 ### print avg rew and RT for first/last 5 episodes ###
