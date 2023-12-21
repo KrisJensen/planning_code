@@ -71,7 +71,7 @@ for seed = seeds #for each independently trained model
 
         rews, as = [reduce(vcat, arr) for arr = [rews, as]] #combine rewards and actions into array
         Nact, Nplan = sum(as .> 0.5, dims = 1), sum(as .> 4.5, dims = 1) #number of actions and number of plans in each episode
-        plan_ts = [Set(randperm(Nact[b]-3)[1:Nplan[b]]) for b = 1:batch] #resample the iterations at which I should plan (avoiding last iterations)
+        plan_ts = [Set(randperm(max(Nact[b]-3, Nplan[b]))[1:Nplan[b]]) for b = 1:batch] #resample the iterations at which I should plan (avoiding last iterations)
 
         #print some summary data
         println("\n", seed, " shuffled: ", shuffle)

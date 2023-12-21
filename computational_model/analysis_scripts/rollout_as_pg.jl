@@ -34,6 +34,7 @@ Nstates, Naction, T = ed.Nstates,  ed.Naction, ed.T
 all_sim_as, all_sim_a2s = [], [] #first and second rollout actions
 all_jacs, all_jacs_shift, all_jacs_shift2 = [], [], [] #Jacobians (dh/R_tau), Jacs with fake action 1, and Jacs with fake action 2
 all_gs, all_gs2 = [], [] #Gradients and gradients for second action
+all_pis = [] # log policies over actions
 full_inps = [] #rollout feedback
 meangv = [] #instantiate
 
@@ -41,9 +42,11 @@ Random.seed!(2) #set random seed for reproducibility
 for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction of R_tau, then actual test episodes
     if mode == "R_tau" println("estimating R_tau") else println("computing policy gradients") end
     all_rews = [] #container for storing rewards
+    agent_output = nothing # instantiate
 
     # run a handful of steps
     batch = 1002 #number of episodes to consider
+
     world_state, agent_input = wall_environment.initialize(
         zeros(2), zeros(2), batch, m.model_properties
     )
@@ -67,10 +70,15 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
         plan_bs = findall(exploit[:] .& just_planned) #episodes where I just did a rollout during exploitation
         Nps = length(plan_bs) #number of episodes to consider
         if (mode == "test") && Nps > 0.5 #if we're testing and there are episodes to compute PGs for
+
+            logπ = agent_output[1:4, plan_bs]
+            push!(all_pis, exp.(Float64.(logπ .- Flux.logsumexp(logπ; dims=1)))')
+
             newgs, newgs2 = [zeros(Nps, Nhidden, 4) for _ = 1:2] #instantiate gradients
             sim_as, sim_a2s = [zeros(Nps) .+ NaN for _ = 1:2] #instantiate array of rollout actions
             jacs, jacs_shift, jacs_shift2 = [zeros(Nps, Nhidden) for _ = 1:3] #instantiate jacobians
-            for (ib, b) = enumerate(plan_bs)
+
+            for (ib, b) = enumerate(plan_bs) # for each episode where we planned
 
                 sim_a = argmax(agent_input[Nin_base+1:Nin_base+4, b]) #rollout action
                 sim_as[ib] = sim_a #store rollout action
@@ -94,12 +102,13 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
                 jac = jacobian(fh, 0f0)[1] #gradient w.r.t the reward perturbation at zero perturbation
                 jacs[ib, :] = jac #store jacobian
 
+                # here we compute dh/dR
                 fh_shift = (x -> fh(x, shift = shifta)) #function where a1 has been permuted
                 jacs_shift[ib, :] = jacobian(fh_shift, 0f0)[1] #corresponding gradient
                 fh_shift2 = (x -> fh(x, shift = shifta2)) #function where a2 has been permuted
                 jacs_shift2[ib, :] = jacobian(fh_shift2, 0f0)[1] #corresponding gradient
 
-                #function mapping hidden state to policy
+                #function mapping hidden state to policy (for _old_ hidden state)
                 function fp(x, a)
                     logπ = m.policy(x)[1:4] #log policy
                     return logπ[a] - Flux.logsumexp(logπ) #normalized log policy
@@ -157,6 +166,7 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
         just_planned = Bool.(zeros(batch)) #keep track of whether we just performed a rollout
         just_planned[ .~teleport ] .= true #just performed a rollout
         #take a step through the environment
+        old_world_state = world_state # store this
         rew, agent_input, world_state, predictions = wall_environment.step(
                     agent_output, a, world_state, wall_environment.dimensions, m.model_properties, m, h_rnn
                 )
@@ -193,8 +203,8 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
     else #if we're in the test phase
 
         #stack our result arrays and store result
-        arrs = [all_sim_as, all_sim_a2s, all_jacs, all_jacs_shift, all_jacs_shift2, all_gs, all_gs2]
-        labels = ["sim_as", "sim_a2s", "jacs", "jacs_shift", "jacs_shift2", "sim_gs", "sim_gs2"]
+        arrs = [all_sim_as, all_sim_a2s, all_jacs, all_jacs_shift, all_jacs_shift2, all_gs, all_gs2, all_pis]
+        labels = ["sim_as", "sim_a2s", "jacs", "jacs_shift", "jacs_shift2", "sim_gs", "sim_gs2", "all_pis"]
         cat_arrs = [reduce(vcat, arr) for arr = arrs]
         for arr_ind = 1:length(arrs) res_dict[seed][labels[arr_ind]] = cat_arrs[arr_ind] end
 

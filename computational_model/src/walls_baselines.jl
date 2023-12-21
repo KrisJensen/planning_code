@@ -11,7 +11,7 @@ function random_policy(x, md, ed; stay=true)
     return ys
 end
 
-function dist_to_rew(ps, wall_loc, Larena; fname="figs/wall/min_dist.png")
+function dist_to_rew(ps, wall_loc, Larena)
     #compute geodesic distance to reward from each state (i.e. taking walls into account)
     #ps is Nstates x 1
     #wall_loc is 16x4x1

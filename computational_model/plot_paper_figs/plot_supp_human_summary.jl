@@ -1,18 +1,25 @@
-#This script plots Figure S1 of Jensen et al.
+#This script plots Figure S2 of Jensen et al.
 
 include("plot_utils.jl")
 using ToPlanOrNotToPlan
+using StatsBase
 Random.seed!(1) # set random seed (for jitter in panel D)
+wrap = true
+wrap = false
+wrapstr = (if wrap "" else "_euclidean" end)
 
 # We start by loading some of our human behavioural data
-@load "$(datadir)/human_RT_and_rews_play.bson" data; data_play = data # non-guided episodes
-@load "$(datadir)/human_RT_and_rews_follow.bson" data; data_follow = data # guided episodes
-keep = findall([nanmean(RTs) for RTs = data_follow["all_RTs"]] .< 690) # non-outlier users
+@load "$(datadir)/human_RT_and_rews_play$wrapstr.bson" data; data_play = data # non-guided episodes
+@load "$(datadir)/human_RT_and_rews_follow$wrapstr.bson" data; data_follow = data # guided episodes
+means1, means2 = [[nanmean(RTs) for RTs = data["all_RTs"]] for data = [data_follow, data_play]]
+keep = findall(means1 .< 690) # non-outlier users
 Nkeep = length(keep)
+
 
 # mean response times and rewards for all users
 mean_RTs = [[nanmean(RTs) for RTs = data["all_RTs"]] for data = [data_follow, data_play]]
 mean_rews = [[sum(rews)/size(rews, 1) for rews = data["all_rews"]] for data = [data_follow, data_play]]
+sums = [nansum(RT)/size(RT,1)/1e3 for RT = data_play["all_RTs"]]
 
 fig = figure(figsize = (15*cm, 3*cm))
 grids = fig.add_gridspec(nrows=1, ncols=3, left=0.00, right=0.78, bottom = 0, top = 1.0, wspace=0.5)
@@ -31,7 +38,8 @@ end
 # plot mean probability of optimal action against mean response time
 
 # load the data
-@load "$(datadir)/human_all_data_follow.bson" data;
+@load "$(datadir)/human_all_data_follow$wrapstr.bson" data;
+@load "$(datadir)/human_all_data_play$wrapstr.bson" data;
 all_states, all_ps, all_as, all_wall_loc, all_rews, all_RTs, _, _ = data # extract relevant data
 all_opts = []
 Larena = 4; ed = EnvironmentDimensions(4^2, 2, 5, 50, Larena) # Environment parameters
@@ -50,8 +58,12 @@ for i = keep # for each user
     push!(all_opts, mean(opts)) # store results for this user
 end
 RTs = [nanmean(RTs) for RTs = all_RTs[keep]] # corresponding response times
+inds = findall(all_opts .> 0.5)
+RTs, all_opts = RTs[inds], Float64.(all_opts[inds])
+
 rcor = cor(RTs, all_opts) # correlations between response times and optimality
-ctrls = zeros(10000); for i = 1:10000 ctrls[i] = cor(RTs, all_opts[randperm(Nkeep)]) end # permutation test
+ctrls = zeros(10000); for i = 1:10000 ctrls[i] = cor(RTs, all_opts[randperm(length(inds))]) end # permutation test
+println(rcor, " ", mean(ctrls .> rcor))
 
 # plot result
 ax = fig.add_subplot(grids[1,3])
@@ -62,7 +74,7 @@ ax.set_ylabel(L"$p$"*"(optimal)")
 
 # plot means of the prior distributions for each user
 
-@load "$datadir/guided_lognormal_params_delta.bson" params # parameters of prior distributions
+@load "$datadir/guided_lognormal_params_delta$wrapstr.bson" params # parameters of prior distributions
 
 # parameters for initial action of a trial and later actions of a trial
 initial_delays = params["initial"][:, 3]+exp.(params["initial"][:, 1]+params["initial"][:, 2].^2/2)
@@ -81,6 +93,7 @@ ax.set_ylabel("time (ms)")
 
 # print some results as well
 println("correlation between thinking time and optimality: ", rcor, ", p = ", mean(ctrls .> rcor))
+println("mean optimality: ", mean(all_opts))
 
 # add labels and save
 y1 = 1.16
@@ -89,6 +102,6 @@ plt.text(x1,y1,"A"; ha="left",va="top",transform=fig.transFigure,fontweight="bol
 plt.text(x2,y1,"B";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
 plt.text(x3,y1,"C";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
 plt.text(x4,y1,"D";ha="left",va="top",transform=fig.transFigure,fontweight="bold",fontsize=fsize_label,)
-savefig("./figs/supp_human_data.pdf", bbox_inches = "tight")
-savefig("./figs/supp_human_data.png", bbox_inches = "tight")
+savefig("./figs/supp_human_data$wrapstr.pdf", bbox_inches = "tight")
+savefig("./figs/supp_human_data$wrapstr.png", bbox_inches = "tight")
 close()

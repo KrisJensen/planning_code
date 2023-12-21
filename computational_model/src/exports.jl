@@ -45,6 +45,8 @@ export recover_model, save_model
 # initializations.jl
 export initialize_arena, gen_maze_walls, gen_wall_walls
 
+# maze.jl
+export maze
 
 # plotting
 export arena_lines,

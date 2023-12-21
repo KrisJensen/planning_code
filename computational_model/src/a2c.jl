@@ -66,8 +66,8 @@ cross-entropy loss between output distribution and true reward location.
 """
 function calc_rew_prediction_loss(agent_output, Naction, Nstates, r_index, active)
     new_Lpred = 0.0f0 #initialize prediction loss
-    i1 = (Naction + Nstates + 2) #first index of output distribution
-    i2 = (Naction + Nstates + 1 + Nstates) #second index of output distribution
+    i1 = (Naction + Nstates + 3) #first index of output distribution
+    i2 = (Naction + Nstates + 2 + Nstates) #second index of output distribution
     rpred = agent_output[i1:i2, :] #output distribution
     rpred = rpred .- Flux.logsumexp(rpred; dims=1) #softmax over states
     for b in findall(active) #only active episodes
@@ -192,7 +192,7 @@ function run_episode(
     Lpred = 0.0f0 #accumulate prediction loss
     Lprior = 0.0f0 #accumulate regularization loss
 
-    #run until all episoides in the batch are finished
+    #run until all episodes in the batch are finished
     #note that t0 = 1, can take T actions --> last action at T, no more actions at T+1
     while any(world_state.environment_state.time .< (T+1 - 1e-2))
         if hidden

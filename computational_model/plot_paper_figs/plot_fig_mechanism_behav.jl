@@ -14,6 +14,7 @@ fig = figure(figsize = (17*cm, 3.0*cm))
 seeds = sort([k for k = keys(res_dict)])
 Nseed = length(seeds)
 ms1, ms2, bs, es1, es2 = [], [], [], [], []
+dists = 1:6; bydist = []
 for (is, seed) = enumerate(seeds) #for each model
     #time within trial, distance to goal, and policy
     dts, mindists, policies = [res_dict[seed][k] for k = ["dts"; "mindists"; "policies"]]
@@ -24,13 +25,16 @@ for (is, seed) = enumerate(seeds) #for each model
     policies = policies[:, keepinds, :, :, :]
     #mean performance across episodes with (m1) and without (m2) rollout feedback
     m1, m2 = mean(new_dts[1,:,:], dims = 1)[:], mean(new_dts[2,:,:], dims = 1)[:]
-    push!(ms1, m1); push!(ms2, m2); push!(bs, mean(new_mindists)) #also store optimal (bs)
+    push!(bydist, reduce(vcat, [mean(new_dts[1,new_mindists .== dist,:], dims = 1) for dist = dists]))
+    push!(ms1, m1); push!(ms2, m2); push!(bs, mean(new_mindists)) #also store optimal (bs))
     p1, p2 = policies[1, :, :, :, :], policies[2, :, :, :, :] #extract log policies
     p1, p2 = [p .- Flux.logsumexp(p, dims = 4) for p = [p1, p2]] #normalize
     e1, e2 = [-sum(exp.(p) .* p, dims = 4)[:, :, :, 1] for p = [p1, p2]] #entropy
     m1, m2 = [mean(e[:,:,1], dims = 1)[:] for e = [e1,e2]] #only consider entropy of first action
     push!(es1, m1); push!(es2, m2) #store entropies
 end
+bydist = reduce((a,b) -> cat(a, b, dims = 3), bydist)
+bydist = mean(bydist, dims = 3)[:, :, 1]
 #concatenate across seeds
 ms1, ms2, es1, es2 = [reduce(hcat, arr) for arr = [ms1, ms2, es1, es2]]
 # compute mean and std across seeds
@@ -46,6 +50,8 @@ ax = fig.add_subplot(grids[1,1])
 ax.plot(nplans,m1, ls = "-", color = col_p, label = "agent") #mean
 ax.fill_between(nplans,m1-s1,m1+s1, color = col_p, alpha = 0.2) #standard error
 plot([nplans[1]; nplans[end]], ones(2)*mean(bs), color = col_c, ls = "-", label = "optimal") #optimal baseline
+ax.plot(nplans,m2, ls = ":", color = col_c, label = "ctrl") #mean
+ax.fill_between(nplans,m2-s2,m2+s2, color = col_c, alpha = 0.2) #standard error
 legend(frameon = false, loc = "upper right", fontsize = fsize_leg, handlelength=1.5, handletextpad=0.5, borderpad = 0.0, labelspacing = 0.05)
 xlabel("# rollouts")
 ylabel("steps to goal")

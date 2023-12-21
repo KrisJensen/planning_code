@@ -11,12 +11,12 @@ catch e
     global run_default_analyses = true
 end
 
-function run_causal_rollouts(;seeds, N, Lplan, epoch, prefix = "")
+function run_causal_rollouts(;seeds, N, Lplan, epoch, prefix = "", model_prefix = "")
 println("analysing behaviour after successful and unsuccessful replays")
 
 for seed = seeds #iterate through independently trained models
 
-    fname = "N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$(epoch)" #model name
+    fname = "$(model_prefix)N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$(epoch)" #model name
     println("loading $fname")
     network, opt, store, hps, policy, prediction = recover_model("$loaddir$fname") #load parameters
 

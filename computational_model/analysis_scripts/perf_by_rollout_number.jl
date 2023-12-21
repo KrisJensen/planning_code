@@ -16,15 +16,15 @@ end
 analyses the performance (in terms of steps to goal) on trial 2
 as a function of the number of enforced rollouts.
 """
-function run_perf_by_rollout_number(;seeds, N, Lplan, epoch, prefix = "")
+function run_perf_by_rollout_number(;seeds, N, Lplan, epoch, prefix = "", model_prefix = "")
 println("quantifying trial 2 performance by number of rollouts")
 
 res_dict = Dict() #dictionary to store results
 
 for seed = seeds #iterate through random seeds
-println("\n new seed $(seed)!")
 res_dict[seed] = Dict() #results for this seed
-filename = "N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
+filename = "$(model_prefix)N$(N)_T50_Lplan$(Lplan)_seed$(seed)_$epoch" #model to load
+println("\nloading $filename")
 network, opt, store, hps, policy, prediction = recover_model(loaddir*filename) #load model parameters
 
 Larena = hps["Larena"] #size of the arena
@@ -41,7 +41,7 @@ Nin_base = Naction + 1 + 1 + Nstates + 2 * Nstates #'physical' input dimensions
 Nhidden = m.model_properties.Nhidden
 tmax = 50
 Lplan = model_properties.Lplan
-nreps = 1000 #number of random environments to consider
+nreps = 5000 #number of random environments to consider
 nplans = 0:15 #number of plans enforced
 dts = zeros(2, nreps, length(nplans)) .+ NaN; #time to goal
 policies = zeros(2, nreps, length(nplans), 10, 5) .+ NaN; #store policies
@@ -49,7 +49,7 @@ mindists = zeros(nreps, length(nplans));
 
 for ictrl = [1;2] #plan input or not (zerod out)
     for nrep = 1:nreps #for each repetition
-        if nrep % 100 == 0 println(nrep) end
+        if nrep % 1000 == 0 println(nrep) end
         for (iplan, nplan) = enumerate(nplans) #for each number of rollouts enforced
             Random.seed!(nrep) #set random seed for consistent environment across #rollouts
             world_state, agent_input = wall_environment.initialize(
@@ -102,6 +102,8 @@ for ictrl = [1;2] #plan input or not (zerod out)
                     if exploit[1] #already found reward before
                         finished = true #now finished since we only consider trial 2
                         dts[ictrl, nrep, iplan] = t - t1 - 1 - nplan #store the number of actions to goal
+                        @assert nact == (t - t1 - 1 - nplan)
+                        @assert nact >= mindists[nrep, iplan]
                     else #first time
                         global t1 = t #reset timer at the end of first trial
                     end

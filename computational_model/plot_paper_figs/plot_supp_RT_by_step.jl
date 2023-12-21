@@ -1,4 +1,4 @@
-#This script plots Figure S2 of Jensen et al.
+#This script plots Figure S4 of Jensen et al.
 
 include("plot_utils.jl")
 

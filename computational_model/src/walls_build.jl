@@ -9,6 +9,7 @@ function useful_dimensions(Larena, planner)
     Nstate_rep = 2 #dimensionality of the state representation (e.g. '2' for x,y-coordinates)
     Naction = 5 #number of actions available
     Nout = Naction + 1 + Nstates #actions and value function and prediction of state
+    Nout += 1 # needed for backward compatibility (this lives between state and reward predictions)
     Nwall_in = 2 * Nstates #provide full info
     Nin = Naction + 1 + 1 + Nstates + Nwall_in #5 actions, 1 rew, 1 time, L^2 states, some walls
 
@@ -108,7 +109,7 @@ function act_and_receive_reward(
         plan_states = planning_state.plan_cache
         plan_lengths = sum(plan_states[:, planned] .> 0.5, dims = 1)[:] # number of planning steps for each batch
         new_time[planned] += plan_lengths*planner.planning_time/5
-        println("variabled planning time! ", plan_lengths*planner.planning_time/5)
+        if rand() < 1e-5 println("variable planning time! ", plan_lengths*planner.planning_time/5) end
     end
 
     rew[1, planned] .+= planner.planning_cost #cost of planning (in units of rewards; default 0)
@@ -137,8 +138,8 @@ function build_environment(
     constant_rollout_time = true,
 )
 
-    #create planner object
-    #note that planner includes a 'plan_state' which can carry over in more general planning algorithms
+    # create planner object
+    # note that planner includes a 'plan_state' which can carry over in more general planning algorithms
     planner, initial_plan_state = build_planner(Lplan, Larena; constant_rollout_time)
     Nstates, Nstate_rep, Naction, Nout, Nin = useful_dimensions(Larena, planner) #compute some useful quantities
     model_properties = ModelProperties(Nout, Nhidden, Nin, Lplan, greedy_actions, no_planning) #initialize a model property object
