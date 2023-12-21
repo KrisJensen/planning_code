@@ -13,7 +13,6 @@ To install these packages:\
     `using Pkg`\
     `Pkg.instantiate()`\
 To run the pretrained models, BSON 0.3.5 and Flux 0.13.5 should be installed since backwards compatibility was not preserved for the latest versions of these packages.
-
 Julia 1.8.0 was used for all analyses in the paper.
 
 The primary script used to train RL agents is './computational_model/walls_train.jl'.
