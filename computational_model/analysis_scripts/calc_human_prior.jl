@@ -3,7 +3,7 @@ include("anal_utils.jl")
 using ToPlanOrNotToPlan
 
 wrapstr = ""
-wrapstr = "_euclidean"
+#wrapstr = "_euclidean" # to run the Euclidean analysis
 
 println("computing prior parameters for human response times")
 

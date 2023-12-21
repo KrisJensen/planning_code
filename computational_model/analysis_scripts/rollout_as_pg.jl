@@ -46,7 +46,7 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
 
     # run a handful of steps
     batch = 1002 #number of episodes to consider
-    #batch = 31
+
     world_state, agent_input = wall_environment.initialize(
         zeros(2), zeros(2), batch, m.model_properties
     )
@@ -70,19 +70,6 @@ for (i_mode, mode) = enumerate(["R_tau", "test"]) #first estimate the direction 
         plan_bs = findall(exploit[:] .& just_planned) #episodes where I just did a rollout during exploitation
         Nps = length(plan_bs) #number of episodes to consider
         if (mode == "test") && Nps > 0.5 #if we're testing and there are episodes to compute PGs for
-
-            ### first compute a set of 10 auxiliary plans to use as controls
-            # nctrl = 5
-            # all_inputs = zeros(nctrl, size(agent_input, 1), size(agent_input, 2)) .+ agent_input # crtl inputs
-            # for ictrl = 1:ntrl
-            #     ahot = zeros(5, batch); ahot[5, :] .= 1 # only used to determine where to plan (where a = 5)
-            #     at_rew = Bool.(ones(batch)); at_rew[plan_inds] .= false # only used to determine where to plan (not at rew)
-            #     ctrl_planning_state, ctrl_plan_inds = planner.planning_algorithm(old_world_state,ahot,ed,agent_output,at_rew,planner,m,h_rnn,model_properties)
-            #     @assert ctrl_plan_inds == plan_inds
-            #     plan_input = ctrl_planning_state.plan_input
-            #     all_inputs[ictrl, :, :] = plan_input
-            # end
-            ###
 
             logπ = agent_output[1:4, plan_bs]
             push!(all_pis, exp.(Float64.(logπ .- Flux.logsumexp(logπ; dims=1)))')

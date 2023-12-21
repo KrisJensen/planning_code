@@ -21,7 +21,7 @@ for N = sizes #for each network size
     for Lplan = Lplans #for each planning horizon
         println("running N=$N, L=$Lplan")
         # correlation with human RT ####
-        #repeat_human_actions(;seeds, N, Lplan, epoch, prefix = "hp_")
+        repeat_human_actions(;seeds, N, Lplan, epoch, prefix = "hp_")
 
         # change in performance with replay number ###
         run_perf_by_rollout_number(;seeds, N, Lplan, epoch, prefix = "hp_")
