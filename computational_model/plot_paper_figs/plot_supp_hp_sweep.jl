@@ -33,7 +33,7 @@ ax = fig.add_subplot(grids[1,1])
 ax.bar(1:length(all_vals), all_vals, yerr = all_errs, capsize = capsize,color = col_p)
 for (i, corrs) = enumerate(all_corrs) # plot individual data points
     shifts = 1:length(corrs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15
-    ax.scatter(i .+ shifts, all_corrs, color = col_point, marker = ".", s = 3, alpha = 0.5)
+    ax.scatter(i .+ shifts, all_corrs, color = col_point, marker = ".", s = 3, alpha = 0.5, zorder = 100)
 end
 ax.set_xticks(1:length(all_vals))
 ax.set_xticklabels(all_ticklabels, rotation = 45, ha = "right")
@@ -72,7 +72,7 @@ ax = fig.add_subplot(grids[1,1])
 ax.bar(1:length(all_vals), all_vals, yerr = all_errs, capsize = capsize,color = col_p)
 for (i, diffs) = enumerate(all_diffs) # plot individual data points
     shifts = 1:length(diffs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15
-    ax.scatter(i .+ shifts, all_diffs, color = col_point, marker = ".", s = 3, alpha = 0.5)
+    ax.scatter(i .+ shifts, all_diffs, color = col_point, marker = ".", s = 3, alpha = 0.5, zorder = 100)
 end
 ax.set_xticks(1:length(all_vals))
 ax.set_xticklabels(all_ticklabels, rotation = 45, ha = "right")
@@ -111,9 +111,10 @@ for (ip, p) = enumerate(params)
     ax.bar(1:2, ms, yerr = ss, color = [col_p1, col_p2], capsize = capsize)
     if plot_points
         shifts = 1:length(all_ms[1]); shifts = (shifts .- mean(shifts))/std(shifts)*0.2
-        ax.scatter([1 .+ shifts; 2 .+ shifts], [all_ms[1]; all_ms[2]], color = col_point, marker = ".", s = 15)
+        ax.scatter([1 .+ shifts; 2 .+ shifts], [all_ms[1]; all_ms[2]], color = col_point, marker = ".", s = 15, zorder = 100)
     end
-    ax.set_xticks(1:2, ["succ"; "un"])
+    ax.set_xticks(1:2)
+    ax.set_xticklabels(["succ"; "un"])
     if ip == 1
         ax.set_ylabel(L"$\Delta \pi(\hat{a}_1)$", labelpad = 0)
         ax.set_yticks([-0.4;0;0.4])

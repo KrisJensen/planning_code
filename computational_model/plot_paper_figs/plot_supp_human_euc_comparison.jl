@@ -83,9 +83,10 @@ for (idat, data) = enumerate(datas)
     ax = fig.add_subplot(grids[1,idat])
     ax.bar(1:2, mus, color = col_c) # bar plot
     # plot individual data points
-    ax.scatter(ones(NT)+randn(NT)*0.1, torus, marker = ".", s = 6, color = "k")
-    ax.scatter(ones(NE)*2+randn(NE)*0.1, euclid, marker = ".", s = 6, color = "k")
-    ax.set_xticks(1:2, ["wrap"; "no-wrap"], rotation = 45, ha = "right")
+    ax.scatter(ones(NT)+randn(NT)*0.1, torus, marker = ".", s = 6, color = "k", zorder = 100)
+    ax.scatter(ones(NE)*2+randn(NE)*0.1, euclid, marker = ".", s = 6, color = "k", zorder = 100)
+    ax.set_xticks(1:2)
+    ax.set_xticklabels(["wrap"; "no-wrap"], rotation = 45, ha = "right")
     ax.set_ylabel(ylabs[idat])
     #ax.set_title(titles[idat])
 end

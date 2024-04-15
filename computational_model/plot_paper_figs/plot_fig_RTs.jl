@@ -88,7 +88,8 @@ for (idat, RT_dat) = enumerate([cat_TTs, cat_RTs]) #plot both thinking and respo
     end
     #set some plot parameters
     ax.set_ylim(0, 40000)
-    ax.set_yticks([0;20000;40000], [0;20;40])
+    ax.set_yticks([0;20000;40000])
+    ax.set_yticklabels([0;20;40])
     if idat == 1 ax.set_xticks([0;400;800]) end
     ax.set_xlim(bins[1], bins[end])
 end
@@ -237,10 +238,11 @@ ax.set_yticks([0;0.1;0.2;0.3])
 for i_n = 1:3 #for each bar
     corrs = allsims[:, i_n] #individual correlations
     shifts = 1:length(corrs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15
-    ax.scatter(i_n .+ shifts, corrs, color = col_point, marker = ".", s = 3, alpha = 0.5)
+    ax.scatter(i_n .+ shifts, corrs, color = col_point, marker = ".", s = 3, alpha = 0.5, zorder = 100)
 end
 ax.set_yticks([-0.1;0;0.1;0.2;0.3;0.4])
-ax.set_xticks(1:3, [L"$\pi$"*"(rollout)"; "goal dist"; "residual"], rotation = 45, ha = "right", rotation_mode = "anchor")
+ax.set_xticks(1:3)
+ax.set_xticklabels([L"$\pi$"*"(rollout)"; "goal dist"; "residual"], rotation = 45, ha = "right", rotation_mode = "anchor")
 ax.set_ylabel("correlation with\nthinking time")
 ax.set_xlim(0.25, 3.75)
 println("mean and sem of correlations: ", m, " ", s) #print results

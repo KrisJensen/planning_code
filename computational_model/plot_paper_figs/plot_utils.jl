@@ -72,7 +72,8 @@ function plot_comparison(ax, data; xticklabs = ["", ""], ylab = "", xlab = nothi
 
     ax.set_xlim(1-0.5, xs[end]+0.5)
     if rotation == 0 ha = "center" else ha = "right" end
-    ax.set_xticks(xs, xticklabs, rotation = rotation, ha = ha, rotation_mode = "anchor")
+    ax.set_xticks(xs)
+    ax.set_xticklabels(xticklabs, rotation = rotation, ha = ha, rotation_mode = "anchor")
     ax.set_xlabel(xlab)
     ax.set_ylabel(ylab)
     ax.set_ylim(ylims)

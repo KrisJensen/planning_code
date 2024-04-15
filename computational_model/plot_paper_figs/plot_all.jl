@@ -40,7 +40,7 @@ include("plot_supp_RT_by_step.jl")
 
 #Sfig 5
 println("\nplotting supplementary hp sweep")
-include("plot_supp_hp_sweep.jl")
+#include("plot_supp_hp_sweep.jl")
 
 #Sfig 6
 println("\nplotting supplementary value function analyses")

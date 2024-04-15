@@ -86,9 +86,10 @@ ax = fig.add_subplot(grids[1,1])
 mus = [mean(initial_delays[keep]); mean(later_delays[keep])] # mean across users
 ax.bar(1:2, mus, color = col_c) # bar plot
 # plot individual data points
-ax.scatter(ones(Nkeep)+randn(Nkeep)*0.1, initial_delays[keep], marker = ".", s = 6, color = "k")
-ax.scatter(ones(Nkeep)*2+randn(Nkeep)*0.1, later_delays[keep], marker = ".", s = 6, color = "k")
-ax.set_xticks(1:2, ["initial"; "later"], rotation = 45, ha = "right")
+ax.scatter(ones(Nkeep)+randn(Nkeep)*0.1, initial_delays[keep], marker = ".", s = 6, color = "k", zorder = 1000)
+ax.scatter(ones(Nkeep)*2+randn(Nkeep)*0.1, later_delays[keep], marker = ".", s = 6, color = "k", zorder = 100)
+ax.set_xticks(1:2)
+ax.set_xticklabels(["initial"; "later"], rotation = 45, ha = "right")
 ax.set_ylabel("time (ms)")
 
 # print some results as well

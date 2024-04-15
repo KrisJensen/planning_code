@@ -26,8 +26,9 @@ for i = 1:2 # for successful and unsuccessful rollouts
     ax.bar(1:2, m3, yerr = s3, color = [col_p1, col_p2][i], capsize = capsize) # bar plot
     # plot individual data points
     shifts = 1:size(ms, 2); shifts = (shifts .- mean(shifts))/std(shifts)*0.2 # add some jitter
-    ax.scatter([1 .+ shifts; 2 .+ shifts], [ms[1, :]; ms[2, :]], color = col_point, marker = ".", s = 15)
-    ax.set_xticks(1:2, ["pre"; "post"])
+    ax.scatter([1 .+ shifts; 2 .+ shifts], [ms[1, :]; ms[2, :]], color = col_point, marker = ".", s = 15, zorder = 100)
+    ax.set_xticks(1:2)
+    ax.set_xticklabels(["pre"; "post"])
     if i == 1 # successful
         ax.set_ylabel(L"$\pi($"*"rollout"*L"$)$", labelpad = -1.5)
         ax.set_title("succ.", fontsize = fsize)

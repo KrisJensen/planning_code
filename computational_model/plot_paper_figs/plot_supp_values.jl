@@ -53,10 +53,10 @@ axs[2].set_ylabel("prediction error")
 
 plan_lengths = 1:5 # lengths to consider
 plan_nums = 0:plan_lengths[end]
-keys = ["tot_plans", "plan_nums", "suc_rolls", "num_suc_rolls", "Vs", "rew_to_go"]
+dkeys = ["tot_plans", "plan_nums", "suc_rolls", "num_suc_rolls", "Vs", "rew_to_go"]
 all_accs, all_vals, all_vals0, all_accs0 = [zeros(length(seeds), length(plan_lengths), length(plan_nums)) for _ = 1:4]
 for (iseed, seed) = enumerate(seeds)
-    tot_plans, plan_nums, suc_rolls, num_suc_rolls, Vs, rew_to_go = [data[seed][key] for key = keys]
+    tot_plans, plan_nums, suc_rolls, num_suc_rolls, Vs, rew_to_go = [data[seed][dkey] for dkey = dkeys]
     accuracy = abs.(Vs - rew_to_go)
     for (ilength, plan_length) = enumerate(plan_lengths)
         for (inum, number) = enumerate(0:plan_length)

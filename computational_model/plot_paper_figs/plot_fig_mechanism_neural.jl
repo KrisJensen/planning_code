@@ -87,7 +87,7 @@ for (ires, res) = enumerate([meanspca, meanspca2]) # first action and seconnd ac
     ax.bar([1;2], mus, yerr = ss, color = col_p, capsize = capsize) # bar plot
     # plot individual data points
     shifts = 1:size(res, 1); shifts = (shifts .- mean(shifts))/std(shifts)*0.2 # add some jitter
-    ax.scatter([1 .+ shifts; 2 .+ shifts], [res[:, 1]; res[:, 2]], color = col_point, marker = ".", s = 15)
+    ax.scatter([1 .+ shifts; 2 .+ shifts], [res[:, 1]; res[:, 2]], color = col_point, marker = ".", s = 15, zorder = 100)
     ax.axhline(0, color = col_c, lw = 2) # baseline
     if ires == 1 # set some plotting parameters
         vmin, vmax = minimum(mus-ss), maximum(mus+ss)
@@ -98,7 +98,8 @@ for (ires, res) = enumerate([meanspca, meanspca2]) # first action and seconnd ac
         ax.set_yticks([])
     end
     # set some labels etc.
-    ax.set_xticks([1;2], [L"${\bf \alpha}^\mathrm{RNN}$", L"${\bf \alpha}^\mathrm{RNN}_\mathrm{ctrl}$"])
+    ax.set_xticks([1;2])
+    ax.set_xticklabels([L"${\bf \alpha}^\mathrm{RNN}$", L"${\bf \alpha}^\mathrm{RNN}_\mathrm{ctrl}$"])
     ax.set_ylim(limy)
     ax.set_title(labs[ires], fontsize = fsize, pad = 0.04)
     ax.set_xlim(0.5, 2.5)

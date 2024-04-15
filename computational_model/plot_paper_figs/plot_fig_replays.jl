@@ -161,14 +161,15 @@ if plot_experimental_replays
         ax = fig.add_subplot(grids[1,ictrl+1])
         ax.bar([1;2], ms, yerr = ss, color = [col_h, col_c][ictrl+1], capsize = capsize)
         ax.set_xlim(0.5, 2.5)
-        ax.set_xticks([1;2], ["succ", "un"])
+        ax.set_xticks([1;2])
+        ax.set_xticklabels(["succ", "un"])
         ax.set_title(["home\ntrials"; "away\ntrials"][ictrl+1], fontsize = fsize, pad = -10)
 
         # plot individual data points
         for i_n = 1:2 # for successful and unsuccessful
             corrs = dats[:, i_n]
             shifts = 1:length(corrs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15 # add some jitter
-            ax.scatter(i_n .+ shifts, corrs, color = col_point, marker = ".", s = 6, alpha = 1)
+            ax.scatter(i_n .+ shifts, corrs, color = col_point, marker = ".", s = 6, alpha = 1, zorder = 100)
         end
         ax.set_ylim(ylims)
         # add some labels to first axis
@@ -186,12 +187,13 @@ nons = [mean(mod_dict[seed]["follow_non"]) for seed = seeds] # unsuccessful
 ax = fig.add_subplot(grids[1,3])
 ax.bar([1;2], [μ;μr], yerr = [s;sr], color = col_p, capsize = capsize)
 ax.set_xlim(0.5, 2.5)
-ax.set_xticks([1;2], ["succ", "un"])
+ax.set_xticks([1;2])
+ax.set_xticklabels(["succ", "un"])
 ax.set_title("model", fontsize = fsize)
 for i_n = 1:2 # plot individual data points for successful and unsuccessful replays
     corrs = (if i_n == 1 succs else nons end) # data for this category
     shifts = 1:length(corrs); shifts = (shifts .- mean(shifts))/std(shifts)*0.15 # add some jitter
-    ax.scatter(i_n .+ shifts, corrs, color = col_point, marker = ".", s = 15, alpha = 1) # plot data
+    ax.scatter(i_n .+ shifts, corrs, color = col_point, marker = ".", s = 15, alpha = 1, zorder = 100) # plot data
 end
 ylims = [0;1.02]
 ax.set_ylim(ylims); ax.set_yticks([])
